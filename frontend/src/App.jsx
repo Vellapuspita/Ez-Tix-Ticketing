@@ -13,6 +13,8 @@ import ProfilePage from "./pages/ProfilePage";
 import EditProfilePage from "./pages/EditProfilePage";
 import ChangePasswordPage from "./pages/ChangePasswordPage";
 import EventListPage from "./pages/EventListPage";
+import PaymentPage from "./pages/PaymentPage";
+import PaymentSuccessPage from "./pages/PaymentSuccessPage"
 
 import MainLayout from "./components/layouts/MainLayout";
 
@@ -135,6 +137,15 @@ function App() {
             </MainLayout>
           } 
         />
+        <Route
+          path="/payment/:id"
+          element={<MainLayout><PaymentPage /></MainLayout>}
+        />
+        <Route
+          path="/payment-success"
+          element={<MainLayout><PaymentSuccessPage /></MainLayout>}
+        />
+
 
         {/* fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

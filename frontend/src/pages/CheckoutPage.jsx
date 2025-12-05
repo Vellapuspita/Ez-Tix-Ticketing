@@ -3,153 +3,161 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { events } from "../data/events";
 
-const paymentMethods = ["Dana", "Gopay", "Mandiri", "BCA"];
-
 export default function CheckoutPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const ev = events.find((e) => e.id === Number(id));
 
-  const [name, setName] = useState("Selina Maharani");
-  const [email, setEmail] = useState("maharanisln123@gmail.com");
-  const [method, setMethod] = useState("Dana");
-  const [account, setAccount] = useState("");
-  const [error, setError] = useState("");
+  const [quantity, setQuantity] = useState(1);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [emailValid, setEmailValid] = useState(false);
 
   if (!ev) return <p>Acara tidak ditemukan.</p>;
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!account) {
-      setError("Nomor akun wajib diisi");
-      return;
-    }
+  const handleEmail = (v) => {
+    setEmail(v);
+    setEmailValid(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v));
+  };
 
-    const ticketId = "12345678";
-    const paymentId = "#EzTix20252709";
-
-    const ticket = {
-      ticketId,
-      paymentId,
-      eventId: ev.id,
-      eventTitle: ev.title,
-      name,
-      email,
-      price: ev.price,
-      status: "Berhasil",
-      date: ev.date,
-      time: ev.time,
-      location: ev.location,
-      method,
-    };
-
-    const existing = JSON.parse(localStorage.getItem("tickets") || "[]");
-    localStorage.setItem("tickets", JSON.stringify([...existing, ticket]));
-
-    navigate("/tickets");
+  const handleNext = () => {
+    if (!name || !emailValid) return;
+    navigate(`/payment/${ev.id}`, {
+      state: { name, email, quantity },
+    });
   };
 
   return (
-    <div className="grid lg:grid-cols-[2fr,1.2fr] gap-6">
-      {/* Form pemesanan */}
-      <div className="bg-white rounded-3xl shadow-md p-6 space-y-4">
-        <h2 className="text-lg font-semibold mb-1">Konfirmasi pemesanan</h2>
-        <p className="text-xs text-gray-500 mb-2">
-          Pastikan data di formulir ini diisi dengan benar. E-tiket akan dikirim ke alamat email
-          sesuai yang kamu masukkan.
-        </p>
+    <div className="bg-[#f3f3f3] min-h-screen px-6 py-8">
+      {/* HEADER */}
+      <div className="flex items-center gap-4 mb-6">
+        <button
+          onClick={() => navigate(-1)}
+          className="w-10 h-10 rounded-full bg-[#FCD663] flex items-center justify-center shadow-md"
+        >
+          <span className="material-icons text-black">arrow_back</span>
+        </button>
 
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <div className="space-y-1">
+        <div>
+          <h1 className="text-2xl font-extrabold">Konfirmasi pemesanan</h1>
+          <p className="text-sm text-gray-600">
+            Pastikan data di formulir ini diisi dengan benar, karena e-tiket akan
+            dikirim ke alamat email sesuai data yang Anda masukkan.
+          </p>
+        </div>
+      </div>
+
+      {/* TIKET CARD */}
+      <div className="bg-[#F4F4DD] rounded-2xl shadow-md flex p-4 mb-6">
+        {/* LEFT IMAGE + DATE */}
+        <div className="w-40 bg-white rounded-xl overflow-hidden shadow flex flex-col items-center p-2">
+          <img src={ev.banner} className="w-full h-20 object-cover rounded-md" />
+
+          <p className="mt-2 font-bold text-lg leading-5">
+            {ev.date.split(" ")[0]}
+          </p>
+          <p className="text-sm">{ev.date.split(" ")[1]}</p>
+          <p className="text-xs text-gray-500 mt-1">{ev.time}</p>
+        </div>
+
+        {/* EVENT INFO */}
+        <div className="flex-1 px-6 py-2">
+          <h2 className="text-xl font-extrabold">{ev.title}</h2>
+          <p className="text-gray-600 text-sm">{ev.location}</p>
+          <p className="text-green-600 text-xl font-bold mt-2">
+            Rp {ev.price.toLocaleString("id-ID")}
+          </p>
+        </div>
+
+        {/* JUMLAH */}
+        <div className="flex items-center px-6 gap-4">
+          <span className="font-medium">Jumlah</span>
+          <div className="flex items-center gap-3 bg-white px-3 py-1 rounded-xl shadow-sm">
+            <button
+              disabled={quantity <= 1}
+              onClick={() => setQuantity(quantity - 1)}
+              className="text-lg font-bold disabled:text-gray-400"
+            >
+              −
+            </button>
+            <span>{quantity}</span>
+            <button
+              onClick={() => setQuantity(quantity + 1)}
+              className="text-lg font-bold"
+            >
+              +
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* FORMULIR */}
+      <div className="border-b pb-6">
+        <h3 className="text-lg font-bold mb-4">Formulir</h3>
+
+        <div className="space-y-4">
+          {/* Name */}
+          <div>
             <label className="text-sm font-medium">Nama lengkap</label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 outline-none"
+              placeholder="Masukkan nama lengkap"
+              className="w-full border rounded-xl px-4 py-3 shadow-sm outline-none focus:ring-2 focus:ring-orange-400"
             />
           </div>
 
-          <div className="space-y-1">
+          {/* Email */}
+          <div>
             <label className="text-sm font-medium">Alamat email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 outline-none"
-            />
-          </div>
+            <div className="relative">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => handleEmail(e.target.value)}
+                placeholder="Masukkan alamat email"
+                className="w-full border rounded-xl px-4 py-3 shadow-sm outline-none focus:ring-2 focus:ring-orange-400 pr-10"
+              />
 
-          <div className="space-y-2">
-            <p className="text-sm font-medium">Pilih metode pembayaran</p>
-            <div className="flex flex-wrap gap-2">
-              {paymentMethods.map((m) => (
-                <button
-                  type="button"
-                  key={m}
-                  onClick={() => setMethod(m)}
-                  className={`px-4 py-2 text-xs rounded-full border ${
-                    method === m
-                      ? "bg-[#F0A33F] text-black border-[#F0A33F]"
-                      : "bg-white text-gray-700 border-gray-300 hover:bg-orange-50"
-                  }`}
-                >
-                  {m}
-                </button>
-              ))}
+              {/* CHECK ICON */}
+              {emailValid && (
+                <span className="material-icons text-green-600 absolute right-3 top-3">
+                  check
+                </span>
+              )}
             </div>
           </div>
-
-          <div className="space-y-1">
-            <label className="text-sm font-medium">Nomor akun</label>
-            <input
-              value={account}
-              onChange={(e) => setAccount(e.target.value)}
-              placeholder="Masukkan nomor akun"
-              className={`w-full border rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 outline-none ${
-                error ? "border-red-400" : "border-gray-300"
-              }`}
-            />
-            {error && <p className="text-xs text-red-500">{error}</p>}
-          </div>
-
-          <div className="flex gap-3 justify-end pt-2">
-            <button
-              type="button"
-              onClick={() => navigate(-1)}
-              className="px-4 py-2 text-sm rounded-full border border-gray-300 text-gray-700 hover:bg-gray-50"
-            >
-              Batalkan
-            </button>
-            <button
-              type="submit"
-              className="px-6 py-2 text-sm font-semibold rounded-full bg-[#F0A33F] text-black shadow hover:bg-[#f3b455]"
-            >
-              Buat pesanan
-            </button>
-          </div>
-        </form>
-      </div>
-
-      {/* Ringkasan tiket */}
-      <div className="bg-white rounded-3xl shadow-md p-6 space-y-3">
-        <h3 className="text-lg font-semibold mb-2">Ringkasan tiketmu</h3>
-        <div className="bg-[#FFF7E6] rounded-2xl p-4 space-y-2">
-          <p className="text-sm font-semibold">{ev.title}</p>
-          <p className="text-xs text-gray-600 flex items-center gap-1">
-            <span className="material-icons text-sm">location_on</span> {ev.location}
-          </p>
-          <p className="text-xs text-gray-600 flex items-center gap-1">
-            <span className="material-icons text-sm">calendar_today</span> {ev.date}
-          </p>
-          <p className="text-xs text-gray-600 flex items-center gap-1">
-            <span className="material-icons text-sm">access_time</span> {ev.time}
-          </p>
-          <p className="text-sm font-semibold mt-1">
-            Harga tiket : Rp {ev.price.toLocaleString("id-ID")}
-          </p>
-          <p className="text-xs text-gray-500 mt-2">Jumlah: 1 tiket</p>
         </div>
       </div>
+
+      {/* RINGKASAN */}
+      <div className="border-b pb-6 pt-6">
+        <h3 className="text-lg font-bold mb-3">Ringkasan tiketmu</h3>
+
+        <div className="bg-white border-2 border-blue-400 rounded-2xl p-6 shadow-sm space-y-2">
+          <p className="text-sm">
+            <strong>Nama tiket :</strong> {ev.title}
+          </p>
+          <p className="text-sm">
+            <strong>Harga tiket :</strong> Rp {ev.price.toLocaleString("id-ID")}
+          </p>
+          <p className="text-sm">
+            <strong>Nama lengkap :</strong> {name || "-"}
+          </p>
+          <p className="text-sm">
+            <strong>Alamat email :</strong> {email || "-"}
+          </p>
+        </div>
+      </div>
+
+      {/* BUTTON */}
+      <button
+        onClick={handleNext}
+        className="w-full bg-[#F0A33F] text-black py-3 rounded-xl font-semibold shadow-md hover:bg-[#E69A33] disabled:bg-gray-300"
+        disabled={!name || !emailValid}
+      >
+        Lanjutkan pembayaran
+      </button>
     </div>
   );
 }
