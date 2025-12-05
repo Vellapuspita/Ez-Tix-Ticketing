@@ -1,23 +1,15 @@
-import React from 'react';
-
-// Komponen Input yang bisa dipakai ulang
-const Input = ({ label, type = 'text', name, placeholder, value, onChange }) => {
+// src/components/ui/Input.jsx
+export default function Input({ label, error, ...props }) {
   return (
-    <div className="mb-4">
-      <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-1">
-        {label}
-      </label>
+    <div className="space-y-1">
+      {label && <label className="text-sm font-medium text-slate-700">{label}</label>}
       <input
-        type={type}
-        id={name}
-        name={name}
-        placeholder={placeholder}
-        value={value}
-        onChange={onChange}
-        className="w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+        className={`w-full rounded-xl border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400 ${
+          error ? "border-red-400" : "border-slate-200"
+        }`}
+        {...props}
       />
+      {error && <p className="text-xs text-red-500">{error}</p>}
     </div>
   );
-};
-
-export default Input;
+}
