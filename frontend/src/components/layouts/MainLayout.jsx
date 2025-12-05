@@ -34,7 +34,11 @@ export default function MainLayout({ children }) {
 
             <NavLink
               to="/events"
-              className="hover:text-black"
+              className={({ isActive }) =>
+                isActive
+                  ? "border-b-4 border-white pb-1 text-black"
+                  : "hover:text-black"
+              }
             >
               Acara
             </NavLink>
@@ -56,15 +60,16 @@ export default function MainLayout({ children }) {
 
           {/* SEARCH FIELD */}
           <div className="hidden md:flex items-center relative">
-            <input
-              type="text"
-              placeholder="Cari acara..."
-              className="w-72 rounded-full px-4 py-2 pl-10 border border-[#E0E0E0] bg-white text-sm focus:ring-2 focus:ring-orange-400 shadow-sm"
-            />
-            <span className="material-icons absolute left-3 top-2 text-gray-400 text-md">
-              search
+            <span className="material-icons absolute left-3 top-2 text-gray-400">
+    
             </span>
-          </div>
+
+            <input
+                type="text"
+                placeholder="Cari acara..."
+                className="w-72 rounded-full px-4 py-2 pl-10 border border-[#E0E0E0] bg-white text-sm shadow-sm focus:ring-2 focus:ring-orange-400 outline-none"
+            />
+        </div>
 
           {/* PROFILE ICON */}
           <button

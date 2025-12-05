@@ -12,6 +12,7 @@ import TicketListPage from "./pages/TicketListPage";
 import ProfilePage from "./pages/ProfilePage";
 import EditProfilePage from "./pages/EditProfilePage";
 import ChangePasswordPage from "./pages/ChangePasswordPage";
+import EventListPage from "./pages/EventListPage";
 
 import MainLayout from "./components/layouts/MainLayout";
 
@@ -127,6 +128,12 @@ function App() {
               </RequireAuth>
             </MainLayout>
           }
+          />
+        <Route path="/events" element={
+            <MainLayout>
+              <EventListPage />
+            </MainLayout>
+          } 
         />
 
         {/* fallback */}

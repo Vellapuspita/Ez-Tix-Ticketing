@@ -1,8 +1,6 @@
 // src/pages/ChangePasswordPage.jsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Input from "../components/ui/Input";
-import Button from "../components/ui/Button";
 
 export default function ChangePasswordPage() {
   const navigate = useNavigate();
@@ -14,7 +12,7 @@ export default function ChangePasswordPage() {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (newPass !== confirm) {
-      setError("Sepertinya ada typo, coba samakan lagi");
+      setError("Sepertinya ada typo, coba samakan lagi.");
       return;
     }
     setError("");
@@ -23,12 +21,12 @@ export default function ChangePasswordPage() {
   };
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-bold text-slate-800">Ubah kata sandi</h2>
+    <div className="space-y-4 max-w-xl">
+      <h2 className="text-xl font-bold text-[#222]">Ubah kata sandi</h2>
 
-      <div className="bg-white rounded-2xl shadow p-5 max-w-md">
+      <div className="bg-white rounded-3xl shadow-md p-6">
         {error && (
-          <div className="mb-3 text-xs text-red-500 bg-red-50 border border-red-200 rounded-xl px-3 py-2">
+          <div className="mb-3 text-xs text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2">
             {error}
           </div>
         )}
@@ -39,33 +37,49 @@ export default function ChangePasswordPage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            label="Email"
-            value="maharanisln123@gmail.com"
-            disabled
-          />
-          <Input
-            label="Kata sandi baru"
-            type="password"
-            value={newPass}
-            onChange={(e) => setNewPass(e.target.value)}
-          />
-          <Input
-            label="Ulangi kata sandi baru"
-            type="password"
-            value={confirm}
-            onChange={(e) => setConfirm(e.target.value)}
-          />
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Email</label>
+            <input
+              value="maharanisln123@gmail.com"
+              disabled
+              className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm bg-gray-100 text-gray-500"
+            />
+          </div>
 
-          <div className="flex gap-3 justify-end">
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Kata sandi baru</label>
+            <input
+              type="password"
+              value={newPass}
+              onChange={(e) => setNewPass(e.target.value)}
+              className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 outline-none"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Ulangi kata sandi baru</label>
+            <input
+              type="password"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 outline-none"
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"
               onClick={() => navigate("/profile")}
-              className="px-4 py-2 text-sm rounded-full border border-slate-300 text-slate-700 hover:bg-slate-50"
+              className="px-4 py-2 text-sm rounded-full border border-gray-300 text-gray-700 hover:bg-gray-50"
             >
               Batal
             </button>
-            <Button type="submit">Perbarui</Button>
+            <button
+              type="submit"
+              className="px-6 py-2 text-sm rounded-full bg-[#F0A33F] text-black font-semibold shadow hover:bg-[#f3b455]"
+            >
+              Perbarui
+            </button>
           </div>
         </form>
       </div>

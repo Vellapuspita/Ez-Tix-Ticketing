@@ -9,14 +9,14 @@ export default function AuthLayout({ children }) {
       style={{ backgroundImage: `url(${bg})` }}
     >
       <div className="w-full max-w-5xl bg-white/95 rounded-3xl shadow-2xl flex flex-col md:flex-row overflow-hidden">
-        {/* LEFT FORM */}
-        <div className="w-full md:w-1/2 px-8 md:px-12 py-10 flex flex-col justify-center">
+        {/* Form */}
+        <div className="flex-1 px-8 md:px-10 py-10 flex flex-col justify-center">
           {children}
         </div>
 
-        {/* RIGHT LOGO */}
+        {/* Panel logo */}
         <div className="hidden md:flex w-1/2 bg-[#FFF7E6] items-center justify-center">
-          <img src={logo} alt="EZ-TIX" className="w-64 h-auto drop-shadow-lg" />
+          <img src={logo} alt="EZ-TIX" className="w-64 drop-shadow-lg" />
         </div>
       </div>
     </div>

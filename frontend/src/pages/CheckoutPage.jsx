@@ -1,16 +1,14 @@
 // src/pages/CheckoutPage.jsx
 import { useParams, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import Input from "../components/ui/Input";
-import Button from "../components/ui/Button";
 import { events } from "../data/events";
 
 const paymentMethods = ["Dana", "Gopay", "Mandiri", "BCA"];
 
 export default function CheckoutPage() {
   const { id } = useParams();
-  const ev = events.find((e) => e.id === Number(id));
   const navigate = useNavigate();
+  const ev = events.find((e) => e.id === Number(id));
 
   const [name, setName] = useState("Selina Maharani");
   const [email, setEmail] = useState("maharanisln123@gmail.com");
@@ -26,9 +24,7 @@ export default function CheckoutPage() {
       setError("Nomor akun wajib diisi");
       return;
     }
-    setError("");
 
-    // Simulasi membuat tiket & ID pembayaran
     const ticketId = "12345678";
     const paymentId = "#EzTix20252709";
 
@@ -44,6 +40,7 @@ export default function CheckoutPage() {
       date: ev.date,
       time: ev.time,
       location: ev.location,
+      method,
     };
 
     const existing = JSON.parse(localStorage.getItem("tickets") || "[]");
@@ -53,31 +50,37 @@ export default function CheckoutPage() {
   };
 
   return (
-    <div className="grid lg:grid-cols-[2fr,1.3fr] gap-6">
-      {/* Formulir */}
-      <div className="bg-white rounded-2xl shadow p-5 space-y-4">
-        <h2 className="text-lg font-semibold mb-2">Konfirmasi pemesanan</h2>
-        <p className="text-xs text-slate-500">
-          Pastikan data di formulir ini diisi dengan benar, karena e-tiket akan dikirim ke alamat
-          email sesuai data yang Anda masukkan.
+    <div className="grid lg:grid-cols-[2fr,1.2fr] gap-6">
+      {/* Form pemesanan */}
+      <div className="bg-white rounded-3xl shadow-md p-6 space-y-4">
+        <h2 className="text-lg font-semibold mb-1">Konfirmasi pemesanan</h2>
+        <p className="text-xs text-gray-500 mb-2">
+          Pastikan data di formulir ini diisi dengan benar. E-tiket akan dikirim ke alamat email
+          sesuai yang kamu masukkan.
         </p>
 
-        <form onSubmit={handleSubmit} className="space-y-4 mt-2">
-          <Input
-            label="Nama lengkap"
-            placeholder="Masukkan nama lengkap"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <Input
-            label="Alamat email"
-            placeholder="Masukkan alamat email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
+        <form className="space-y-4" onSubmit={handleSubmit}>
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Nama lengkap</label>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 outline-none"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Alamat email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 outline-none"
+            />
+          </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">Pilih Metode Pembayaran</label>
+            <p className="text-sm font-medium">Pilih metode pembayaran</p>
             <div className="flex flex-wrap gap-2">
               {paymentMethods.map((m) => (
                 <button
@@ -86,8 +89,8 @@ export default function CheckoutPage() {
                   onClick={() => setMethod(m)}
                   className={`px-4 py-2 text-xs rounded-full border ${
                     method === m
-                      ? "bg-orange-500 text-white border-orange-500"
-                      : "bg-white text-slate-600 border-slate-200 hover:bg-orange-50"
+                      ? "bg-[#F0A33F] text-black border-[#F0A33F]"
+                      : "bg-white text-gray-700 border-gray-300 hover:bg-orange-50"
                   }`}
                 >
                   {m}
@@ -96,40 +99,55 @@ export default function CheckoutPage() {
             </div>
           </div>
 
-          <Input
-            label="Nomor akun"
-            placeholder="Masukkan nomor akun"
-            value={account}
-            onChange={(e) => setAccount(e.target.value)}
-            error={error}
-          />
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Nomor akun</label>
+            <input
+              value={account}
+              onChange={(e) => setAccount(e.target.value)}
+              placeholder="Masukkan nomor akun"
+              className={`w-full border rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 outline-none ${
+                error ? "border-red-400" : "border-gray-300"
+              }`}
+            />
+            {error && <p className="text-xs text-red-500">{error}</p>}
+          </div>
 
           <div className="flex gap-3 justify-end pt-2">
             <button
               type="button"
               onClick={() => navigate(-1)}
-              className="px-4 py-2 text-sm rounded-full border border-slate-300 text-slate-600 hover:bg-slate-50"
+              className="px-4 py-2 text-sm rounded-full border border-gray-300 text-gray-700 hover:bg-gray-50"
             >
               Batalkan
             </button>
-            <Button type="submit">Buat Pesanan</Button>
+            <button
+              type="submit"
+              className="px-6 py-2 text-sm font-semibold rounded-full bg-[#F0A33F] text-black shadow hover:bg-[#f3b455]"
+            >
+              Buat pesanan
+            </button>
           </div>
         </form>
       </div>
 
-      {/* Ringkasan */}
-      <div className="bg-white rounded-2xl shadow p-5 space-y-3">
+      {/* Ringkasan tiket */}
+      <div className="bg-white rounded-3xl shadow-md p-6 space-y-3">
         <h3 className="text-lg font-semibold mb-2">Ringkasan tiketmu</h3>
-        <div className="border rounded-2xl p-4 space-y-2 bg-[#FFF7E6]">
+        <div className="bg-[#FFF7E6] rounded-2xl p-4 space-y-2">
           <p className="text-sm font-semibold">{ev.title}</p>
-          <p className="text-xs text-slate-600">{ev.location}</p>
-          <p className="text-xs text-slate-600">
-            {ev.date} • {ev.time}
+          <p className="text-xs text-gray-600 flex items-center gap-1">
+            <span className="material-icons text-sm">location_on</span> {ev.location}
+          </p>
+          <p className="text-xs text-gray-600 flex items-center gap-1">
+            <span className="material-icons text-sm">calendar_today</span> {ev.date}
+          </p>
+          <p className="text-xs text-gray-600 flex items-center gap-1">
+            <span className="material-icons text-sm">access_time</span> {ev.time}
           </p>
           <p className="text-sm font-semibold mt-1">
             Harga tiket : Rp {ev.price.toLocaleString("id-ID")}
           </p>
-          <p className="text-xs text-slate-500 mt-2">Jumlah: 1</p>
+          <p className="text-xs text-gray-500 mt-2">Jumlah: 1 tiket</p>
         </div>
       </div>
     </div>
