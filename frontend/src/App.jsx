@@ -1,157 +1,113 @@
-// src/App.jsx
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import MainLayout from "./components/layouts/MainLayout";
 import AuthLayout from "./components/layouts/AuthLayout";
+
+import DashboardPage from "./pages/DashboardPage";
+import EventListPage from "./pages/EventListPage";
+import EventDetailPage from "./pages/EventDetailPage";
+import TicketListPage from "./pages/TicketListPage";
+
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
-import DashboardPage from "./pages/DashboardPage";
-import EventDetailPage from "./pages/EventDetailPage";
-import CheckoutPage from "./pages/CheckoutPage";
-import TicketListPage from "./pages/TicketListPage";
+
 import ProfilePage from "./pages/ProfilePage";
 import EditProfilePage from "./pages/EditProfilePage";
 import ChangePasswordPage from "./pages/ChangePasswordPage";
-import EventListPage from "./pages/EventListPage";
+
+import CheckoutPage from "./pages/CheckoutPage";
 import PaymentPage from "./pages/PaymentPage";
-import PaymentSuccessPage from "./pages/PaymentSuccessPage"
+import PaymentSuccessPage from "./pages/PaymentSuccessPage";
 
-import MainLayout from "./components/layouts/MainLayout";
+// ❗ sementara: state auth dummy
+const isAuthenticated = () => {
+  return !!localStorage.getItem("token");
+};
 
-function RequireAuth({ children }) {
-  const token = localStorage.getItem("token");
-  const location = useLocation();
-
-  if (!token) {
-    return (
-      <Navigate
-        to={`/login?redirect=${encodeURIComponent(location.pathname + location.search)}`}
-        replace
-      />
-    );
+function ProtectedRoute({ children }) {
+  if (!isAuthenticated()) {
+    return <Navigate to="/login" replace />;
   }
-
   return children;
 }
 
-function App() {
+export default function App() {
   return (
-    <Router>
+    <BrowserRouter>
       <Routes>
-        {/* AUTH PAGES */}
-        <Route
-          path="/login"
-          element={
-            <AuthLayout>
-              <LoginPage />
-            </AuthLayout>
-          }
-        />
-        <Route
-          path="/register"
-          element={
-            <AuthLayout>
-              <RegisterPage />
-            </AuthLayout>
-          }
-        />
-        <Route
-          path="/reset-password"
-          element={
-            <AuthLayout>
-              <ResetPasswordPage />
-            </AuthLayout>
-          }
-        />
-
-        {/* CUSTOMER SIDE */}
-        <Route
-          path="/"
-          element={
-            <MainLayout>
-              <DashboardPage />
-            </MainLayout>
-          }
-        />
-        <Route
-          path="/events/:id"
-          element={
-            <MainLayout>
-              <EventDetailPage />
-            </MainLayout>
-          }
-        />
-        <Route
-          path="/events/:id/checkout"
-          element={
-            <MainLayout>
-              <RequireAuth>
-                <CheckoutPage />
-              </RequireAuth>
-            </MainLayout>
-          }
-        />
-        <Route
-          path="/tickets"
-          element={
-            <MainLayout>
-              <RequireAuth>
+        {/* LAYOUT UTAMA (NAVBAR + CONTENT) */}
+        <Route element={<MainLayout />}>
+          <Route path="/" element={<DashboardPage />} />
+          <Route path="/events" element={<EventListPage />} />
+          <Route path="/events/:id" element={<EventDetailPage />} />
+          <Route
+            path="/tickets"
+            element={
+              <ProtectedRoute>
                 <TicketListPage />
-              </RequireAuth>
-            </MainLayout>
-          }
-        />
-        <Route
-          path="/profile"
-          element={
-            <MainLayout>
-              <RequireAuth>
-                <ProfilePage />
-              </RequireAuth>
-            </MainLayout>
-          }
-        />
-        <Route
-          path="/profile/edit"
-          element={
-            <MainLayout>
-              <RequireAuth>
-                <EditProfilePage />
-              </RequireAuth>
-            </MainLayout>
-          }
-        />
-        <Route
-          path="/profile/change-password"
-          element={
-            <MainLayout>
-              <RequireAuth>
-                <ChangePasswordPage />
-              </RequireAuth>
-            </MainLayout>
-          }
+              </ProtectedRoute>
+            }
           />
-        <Route path="/events" element={
-            <MainLayout>
-              <EventListPage />
-            </MainLayout>
-          } 
-        />
-        <Route
-          path="/payment/:id"
-          element={<MainLayout><PaymentPage /></MainLayout>}
-        />
-        <Route
-          path="/payment-success"
-          element={<MainLayout><PaymentSuccessPage /></MainLayout>}
-        />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile/edit"
+            element={
+              <ProtectedRoute>
+                <EditProfilePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile/change-password"
+            element={
+              <ProtectedRoute>
+                <ChangePasswordPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/checkout/:eventId"
+            element={
+              <ProtectedRoute>
+                <CheckoutPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/payment/:eventId"
+            element={
+              <ProtectedRoute>
+                <PaymentPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/payment-success"
+            element={
+              <ProtectedRoute>
+                <PaymentSuccessPage />
+              </ProtectedRoute>
+            }
+          />
+        </Route>
 
+        {/* LAYOUT AUTH (BACKGROUND KONSER + CARD PUTIH) */}
+        <Route element={<AuthLayout />}>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ResetPasswordPage />} />
+        </Route>
 
         {/* fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </Router>
+    </BrowserRouter>
   );
 }
-
-export default App;

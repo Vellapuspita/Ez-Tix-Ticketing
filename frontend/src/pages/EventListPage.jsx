@@ -1,89 +1,133 @@
-// src/pages/EventListPage.jsx
-import { events } from "../data/events";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { events } from "../data/events";
 
 export default function EventListPage() {
   const navigate = useNavigate();
+  const [sortBy, setSortBy] = useState("Tanggal");
+  const [filterOpen, setFilterOpen] = useState(false);
 
-  const handleBuy = (id) => {
-    const token = localStorage.getItem("token");
-    if (!token) navigate(`/login?redirect=/events/${id}/checkout`);
-    else navigate(`/events/${id}/checkout`);
-  };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
 
-      {/* LOCATION */}
-      <div className="flex justify-end text-sm text-gray-600 pr-4">
-        <div className="text-right">
-          <p>Lokasi saat ini</p>
-          <p className="flex items-center gap-1">
-            <span className="material-icons text-sm">location_on</span> Bali
+      {/* ======================== */}
+      {/* TITLE SECTION */}
+      {/* ======================== */}
+      <div className="flex justify-between items-start">
+        <h1 className="text-[32px] font-bold leading-tight">
+          Jelajahi berbagai konser <br />
+          dan acara menarik disini
+        </h1>
+
+        {/* LOKASI SAAT INI */}
+        <div className="text-right text-sm leading-tight">
+          <p className="text-gray-700">Lokasi saat ini</p>
+          <p className="flex items-center justify-end gap-1 font-semibold text-black">
+            <span className="material-icons text-base">location_on</span>
+            Bali
           </p>
         </div>
       </div>
 
-      {/* MAIN WHITE CONTAINER */}
-      <div className="bg-white rounded-t-3xl shadow-md p-8 space-y-8">
+      {/* ======================== */}
+      {/* FILTER DROPDOWN — CENTER */}
+      {/* ======================== */}
+        <div className="flex justify-center mt-2 mb-6">
 
-        {/* Filter */}
-        <div className="w-full flex justify-center mt-2">
-        <button className="px-4 py-2 rounded-xl bg-[#FFE37A] text-black font-semibold text-sm shadow flex items-center gap-1">
-            Urutkan
-            <span className="material-icons text-sm">arrow_drop_down</span>
-        </button>
+          {/* Label */}
+          <span className="text-gray-700 font-medium mr-3">Urutkan</span>
+
+          {/* Wrapper (relative) */}
+          <div className="relative">
+
+            {/* Button */}
+            <button
+              onClick={() => setFilterOpen(!filterOpen)}
+              className="bg-[#F4A623] px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 shadow"
+            >
+              {sortBy}
+              <span className="material-icons text-sm">expand_more</span>
+            </button>
+
+            {/* Dropdown */}
+            {filterOpen && (
+              <div className="absolute top-[45px] left-0 bg-[#F4A623] text-black rounded-lg shadow px-4 py-2 text-sm font-semibold z-20">
+
+                <button
+                  className="block w-full text-left"
+                  onClick={() => {
+                    setSortBy("Tanggal");
+                    setFilterOpen(false);
+                  }}
+                >
+                  Tanggal
+                </button>
+
+                <button
+                  className="block w-full text-left mt-1"
+                  onClick={() => {
+                    setSortBy("Lokasi");
+                    setFilterOpen(false);
+                  }}
+                >
+                  Lokasi
+                </button>
+
+              </div>
+            )}
+
+          </div>
         </div>
 
-        {/* Heading */}
-        <h2 className="text-3xl font-extrabold text-[#1F1F1F]">
-          Jelajahi berbagai konser dan acara menarik di sini
-        </h2>
 
-        {/* LIST OF EVENTS */}
-        <div className="space-y-4">
-          {events.map((ev) => (
-            <div
-              key={ev.id}
-              className="bg-[#EFEFCC] rounded-2xl shadow-md overflow-hidden flex"
-            >
-              {/* DATE BOX */}
-              <div className="w-40 bg-white p-4 flex flex-col justify-center items-center text-center border-r border-gray-200">
-                <img
-                  src={ev.banner}
-                  alt={ev.title}
-                  className="w-full h-20 object-cover rounded-md mb-2"
-                />
-                <p className="font-extrabold text-black text-lg leading-5">
-                  {ev.date.split(" ")[0]} <br />
-                  <span className="text-sm">{ev.date.split(" ")[1]}</span>
-                </p>
-                <p className="text-xs text-gray-500 mt-1">{ev.time}</p>
-              </div>
 
-              {/* INFO */}
-              <div className="flex-1 p-6">
-                <h3 className="text-xl font-bold text-[#2B2B2B]">{ev.title}</h3>
-                <p className="text-sm text-gray-600 mt-1">{ev.location}</p>
+      {/* ======================== */}
+      {/* LIST EVENT */}
+      {/* ======================== */}
+      <div className="space-y-5">
+        {events.map((ev) => (
+          <div
+            key={ev.id}
+            className="grid grid-cols-[160px_1fr_140px] bg-white rounded-2xl shadow overflow-hidden"
+          >
 
-                <p className="text-lg font-bold text-green-600 mt-3">
-                  Rp {ev.price.toLocaleString("id-ID")}
-                </p>
-              </div>
+            {/* POSTER + DATE */}
+            <div className="flex gap-3 p-4">
+              <img
+                src={ev.image}
+                alt={ev.title}
+                className="w-24 h-24 object-cover rounded-xl"
+              />
 
-              {/* BUTTON */}
-              <div className="flex items-center px-6 bg-[#F0A33F] justify-center">
-                <button
-                  onClick={() => handleBuy(ev.id)}
-                  className="bg-white px-6 py-2 rounded-md font-semibold text-[#2B2B2B] shadow-md"
-                >
-                  Beli tiket
-                </button>
+              <div className="flex flex-col justify-center leading-tight">
+                <p className="text-lg font-bold">{ev.day}</p>
+                <p className="text-lg font-bold">{ev.month}</p>
+                <p className="text-lg font-bold">{ev.year}</p>
+
+                <p className="text-sm text-gray-700 mt-1">{ev.time}</p>
               </div>
             </div>
-          ))}
-        </div>
 
+            {/* MIDDLE INFO */}
+            <div className="flex flex-col justify-center px-6 bg-[#F7F9E8]">
+              <h3 className="text-xl font-bold">{ev.title}</h3>
+              <p className="text-sm text-gray-600">{ev.location}</p>
+              <p className="text-green-600 font-semibold mt-1">{ev.price}</p>
+            </div>
+
+            {/* BUTTON */}
+            <div className="bg-[#F4A623] flex justify-center items-center">
+              <button
+                onClick={() => navigate(`/events/${ev.id}`)}
+                className="font-semibold text-black"
+              >
+                Beli tiket
+              </button>
+            </div>
+
+          </div>
+        ))}
       </div>
     </div>
   );

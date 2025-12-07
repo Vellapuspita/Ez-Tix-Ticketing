@@ -1,90 +1,87 @@
-// src/pages/LoginPage.jsx
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
-  const [pass, setPass] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
-  const location = useLocation();
-  const redirect = new URLSearchParams(location.search).get("redirect") || "/";
 
-  const handleSubmit = (e) => {
+  const handleLogin = (e) => {
     e.preventDefault();
-
-    if (!email || !pass) {
+    // TODO: call backend
+    if (!email || !password) {
       setError("Ups! Email atau password kamu tidak cocok");
       return;
     }
-
-    // dummy login
-    localStorage.setItem("token", "dummy-token");
-    localStorage.setItem("username", "Selina Maharani");
-    navigate(redirect, { replace: true });
+    setError("");
+    localStorage.setItem("token", "dummy");
+    navigate("/");
   };
 
   return (
-    <div>
-      <h1 className="text-2xl md:text-3xl font-extrabold text-slate-800 mb-1">
-        SELAMAT DATANG DI EZ-TIX
-      </h1>
-      <p className="text-sm text-slate-500 mb-6">
+    <div className="flex flex-col justify-center h-full">
+      <p className="text-xs text-muted mb-2">
+        Belum punya akun?{" "}
+        <Link to="/register" className="text-primary font-medium">
+          Daftar Sekarang!
+        </Link>
+      </p>
+      <h1 className="text-2xl font-bold mb-1">SELAMAT DATANG DI EZ-TIX</h1>
+      <p className="text-sm text-muted mb-6">
         Satu klik, ribuan pengalaman
       </p>
 
-      {error && (
-        <div className="mb-3 text-xs text-red-500 font-medium bg-red-50 border border-red-200 rounded-xl px-3 py-2">
-          {error}
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="space-y-3">
-        <div className="space-y-1">
-          <label className="text-sm font-medium">Email</label>
+      <form onSubmit={handleLogin} className="space-y-4">
+        <div className="space-y-1 text-sm">
+          <label className="font-medium">Email</label>
           <input
             type="email"
+            className={`w-full rounded-xl border px-3 py-2 focus:outline-none text-sm ${
+              error ? "border-red-500" : "border-gray-300"
+            }`}
             placeholder="Masukkan email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 outline-none"
           />
         </div>
 
-        <div className="space-y-1">
-          <label className="text-sm font-medium">Kata sandi</label>
+        <div className="space-y-1 text-sm">
+          <label className="font-medium">Kata sandi</label>
           <input
             type="password"
-            placeholder="Masukkan kata sandi"
-            value={pass}
-            onChange={(e) => setPass(e.target.value)}
-            className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 outline-none"
+            className={`w-full rounded-xl border px-3 py-2 focus:outline-none text-sm ${
+              error ? "border-red-500" : "border-gray-300"
+            }`}
+            placeholder="Masukkan password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
           />
         </div>
 
-        <div className="flex justify-end">
-          <Link
-            to="/reset-password"
-            className="text-xs text-slate-500 hover:text-orange-600 hover:underline"
+        {error && (
+          <p className="text-xs text-red-500 flex items-center gap-1">
+            {error}
+          </p>
+        )}
+
+        <div className="flex justify-between items-center text-xs mt-1">
+          <button
+            type="button"
+            onClick={() => navigate("/forgot-password")}
+            className="text-muted hover:text-primary"
           >
             Lupa kata sandi?
-          </Link>
+          </button>
         </div>
 
         <button
           type="submit"
-          className="w-full mt-2 bg-[#F0A33F] text-black font-semibold py-2 rounded-full shadow hover:bg-[#f3b455]"
+          className="mt-4 w-full rounded-full bg-primary text-white py-2.5 text-sm font-semibold"
         >
           Masuk
         </button>
       </form>
-
-      <p className="mt-4 text-xs text-slate-500">
-        Belum punya akun?{" "}
-        <Link to="/register" className="text-orange-600 hover:underline">
-          Daftar sekarang!
-        </Link>
-      </p>
     </div>
   );
 }

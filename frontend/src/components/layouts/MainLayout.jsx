@@ -1,92 +1,98 @@
-import { NavLink, useNavigate } from "react-router-dom";
-import logo from "/logo.png";
-import { useState } from "react";
+import { Outlet, NavLink, useNavigate } from "react-router-dom";
 
-export default function MainLayout({ children }) {
+export default function MainLayout() {
   const navigate = useNavigate();
-  const username = localStorage.getItem("username") || "P";
 
   return (
-    <div className="min-h-screen bg-[#F4F4F4] flex flex-col">
+    <div className="min-h-screen bg-[#F7F7F7]">
 
-      {/* NAVBAR - GRADIENT ORANGE */}
-      <header className="bg-gradient-to-r from-[#EFA130] to-[#F4A641] shadow-md">
-        <div className="max-w-7xl mx-auto px-6 lg:px-10 py-4 flex items-center gap-10">
+      {/* NAVBAR */}
+      <nav className="w-full bg-gradient-to-r from-[#F4A623] to-[#F6B34B] py-3 shadow relative">
+        <div className="max-w-6xl mx-auto px-4 flex items-center justify-between">
 
-          {/* LOGO */}
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
-            <img src={logo} className="w-12 drop-shadow-md" />
-            <span className="font-extrabold text-xl text-[#2B2B2B]">EZ-TIX</span>
-          </div>
+          {/* MENU LEFT */}
+          <div className="flex items-center gap-10 font-semibold text-sm">
 
-          {/* MENU */}
-          <nav className="flex gap-6 font-semibold text-[#2B2B2B]">
             <NavLink
               to="/"
               className={({ isActive }) =>
                 isActive
-                  ? "border-b-4 border-white pb-1 text-black"
-                  : "hover:text-black"
+                  ? "relative pb-2 text-white"
+                  : "relative pb-2 text-black"
               }
             >
               Dashboard
+              {/* underline */}
+              <span
+                className={`absolute left-0 right-0 h-[3px] -bottom-3 rounded-t-full ${
+                  window.location.pathname === "/" ? "bg-white" : "bg-transparent"
+                }`}
+              />
             </NavLink>
 
             <NavLink
               to="/events"
               className={({ isActive }) =>
                 isActive
-                  ? "border-b-4 border-white pb-1 text-black"
-                  : "hover:text-black"
+                  ? "relative pb-2 text-white"
+                  : "relative pb-2 text-black"
               }
             >
               Acara
+              <span
+                className={`absolute left-0 right-0 h-[3px] -bottom-3 rounded-t-full ${
+                  window.location.pathname === "/events" ? "bg-white" : "bg-transparent"
+                }`}
+              />
             </NavLink>
 
             <NavLink
               to="/tickets"
               className={({ isActive }) =>
                 isActive
-                  ? "border-b-4 border-white pb-1 text-black"
-                  : "hover:text-black"
+                  ? "relative pb-2 text-white"
+                  : "relative pb-2 text-black"
               }
             >
               Tiketku
+              <span
+                className={`absolute left-0 right-0 h-[3px] -bottom-3 rounded-t-full ${
+                  window.location.pathname === "/tickets" ? "bg-white" : "bg-transparent"
+                }`}
+              />
             </NavLink>
-          </nav>
 
-          {/* SPACER */}
-          <div className="flex-1" />
+          </div>
 
-          {/* SEARCH FIELD */}
-          <div className="hidden md:flex items-center relative">
-            <span className="material-icons absolute left-3 top-2 text-gray-400">
-    
-            </span>
-
-            <input
-                type="text"
+          {/* SEARCH + AVATAR */}
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <input
+                className="w-64 bg-white rounded-full px-10 py-1.5 text-sm shadow focus:outline-none"
                 placeholder="Cari acara..."
-                className="w-72 rounded-full px-4 py-2 pl-10 border border-[#E0E0E0] bg-white text-sm shadow-sm focus:ring-2 focus:ring-orange-400 outline-none"
-            />
+              />
+              <span className="material-icons absolute left-3 top-1.5 text-gray-500 text-base">
+                search
+              </span>
+            </div>
+
+            {/* Avatar */}
+            <div
+              className="h-9 w-9 bg-white rounded-full flex items-center justify-center text-[#F4A623] font-semibold shadow cursor-pointer"
+              onClick={() => navigate("/profile")}
+            >
+              S
+            </div>
+
+          </div>
+
         </div>
+      </nav>
 
-          {/* PROFILE ICON */}
-          <button
-            onClick={() => navigate("/profile")}
-            className="rounded-full w-10 h-10 bg-white flex items-center justify-center border-2 border-orange-600 text-orange-600 font-bold shadow-md hover:bg-orange-50"
-          >
-            {username.charAt(0).toUpperCase()}
-          </button>
-
-        </div>
-      </header>
-
-      {/* PAGE CONTENT */}
-      <main className="max-w-7xl mx-auto w-full px-6 lg:px-10 py-10">
-        {children}
-      </main>
-
+      {/* HALAMAN */}
+      <div className="max-w-6xl mx-auto px-4 py-10">
+        <Outlet />
+      </div>
     </div>
   );
 }

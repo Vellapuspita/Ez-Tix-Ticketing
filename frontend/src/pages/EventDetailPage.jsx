@@ -1,78 +1,73 @@
-// src/pages/EventDetailPage.jsx
-import { useParams, useNavigate } from "react-router-dom";
-import { events } from "../data/events";
+import { useNavigate, useParams } from "react-router-dom";
 
 export default function EventDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const ev = events.find((e) => e.id === Number(id));
 
-  if (!ev) return <p>Acara tidak ditemukan.</p>;
+  // TODO: fetch detail dari backend by id
+  const event = {
+    id,
+    title: "Seminar Nasional Blockchain",
+    location: "Bali, Denpasar • Dharma Negara Alaya Denpasar",
+    dateTime: "27 September 2025 • 09:00 WITA",
+    description:
+      "Bali Blockchain Summit 2025 adalah sebuah forum internasional yang mempertemukan pemerintah, pelaku industri, akademisi, komunitas teknologi, hingga media dalam satu panggung besar. Acara ini bertujuan mengajak masyarakat melihat potensi blockchain lebih dari sekadar teknologi finansial.",
+    ticketsLeft: 100,
+    organizer: "Bali Blockchain Center",
+    price: "Rp. 100.000",
+  };
 
   return (
-    <div className="space-y-4">
-      <div className="bg-white rounded-3xl shadow-md overflow-hidden">
-        {/* Banner */}
-        <div className="h-64 bg-gray-200">
-          <img
-            src={ev.banner}
-            alt={ev.title}
-            className="w-full h-full object-cover"
-          />
-        </div>
+    <div className="bg-card rounded-3xl shadow-card overflow-hidden">
+      {/* banner */}
+      <div className="h-48 md:h-64 bg-gradient-to-r from-primary to-secondary" />
+      {/* content */}
+      <div className="p-5 md:p-8 flex flex-col md:flex-row gap-6">
+        <div className="flex-1 space-y-4">
+          <div>
+            <h1 className="text-2xl font-semibold mb-1">
+              {event.title}
+            </h1>
+            <p className="text-sm text-muted">{event.location}</p>
+            <p className="text-sm text-muted">{event.dateTime}</p>
+          </div>
 
-        {/* Content */}
-        <div className="p-6 space-y-4">
-          <h1 className="text-2xl font-extrabold text-[#222]">
-            {ev.title}
-          </h1>
-
-          <div className="flex flex-wrap gap-3 text-sm text-gray-700">
-            <span className="flex items-center gap-1">
-              <span className="material-icons text-sm">location_on</span>
-              {ev.location}
+          {/* pill tabs dummy */}
+          <div className="flex flex-wrap gap-2 text-xs font-medium mt-2">
+            <span className="px-3 py-1 rounded-full bg-primary text-white">
+              Deskripsi
             </span>
-            <span className="flex items-center gap-1">
-              <span className="material-icons text-sm">calendar_today</span>
-              {ev.date}
+            <span className="px-3 py-1 rounded-full bg-secondary text-dark">
+              Tiket tersedia {event.ticketsLeft}
             </span>
-            <span className="flex items-center gap-1">
-              <span className="material-icons text-sm">access_time</span>
-              {ev.time}
+            <span className="px-3 py-1 rounded-full bg-body text-dark">
+              {event.organizer}
             </span>
           </div>
 
-          <div className="grid md:grid-cols-[2fr,1fr] gap-6 items-start">
-            {/* Deskripsi */}
-            <div className="text-sm text-gray-700 leading-relaxed space-y-2">
-              <p>
-                {ev.description ||
-                  "Acara ini menghadirkan berbagai pengalaman seru dengan penampilan musisi, pembicara, serta aktivitas menarik lainnya. Jangan lewatkan kesempatan untuk menjadi bagian dari momen spesial ini!"}
-              </p>
-              <p>
-                Pastikan kamu sudah melakukan pembelian tiket dan datang lebih awal untuk
-                menghindari antrean panjang.
-              </p>
-            </div>
-
-            {/* Card harga + tombol */}
-            <div className="bg-[#FFF7E6] rounded-2xl p-5 flex flex-col gap-3">
-              <p className="text-xs text-gray-500">Harga mulai dari</p>
-              <p className="text-2xl font-bold text-[#222]">
-                Rp {ev.price.toLocaleString("id-ID")}
-              </p>
-              <button
-                onClick={() => navigate(`/events/${ev.id}/checkout`)}
-                className="mt-2 bg-[#F0A33F] text-black w-full py-2 rounded-md font-semibold shadow hover:bg-[#f3b455]"
-              >
-                Beli tiket sekarang
-              </button>
-              <p className="text-xs text-gray-500 mt-1">
-                Tiket terbatas. Satu akun hanya dapat membeli maksimal 4 tiket.
-              </p>
-            </div>
-          </div>
+          <section className="mt-4">
+            <h2 className="font-semibold mb-1">Deskripsi</h2>
+            <p className="text-sm text-muted leading-relaxed">
+              {event.description}
+            </p>
+          </section>
         </div>
+
+        {/* sidebar price */}
+        <aside className="md:w-64 bg-body rounded-2xl p-4 flex flex-col justify-between">
+          <div>
+            <p className="text-sm text-muted">Mulai dari</p>
+            <p className="text-2xl font-semibold text-primary">
+              {event.price}
+            </p>
+          </div>
+          <button
+            className="mt-4 w-full rounded-full bg-primary text-white py-2.5 font-semibold text-sm"
+            onClick={() => navigate(`/checkout/${event.id}`)}
+          >
+            Beli Sekarang
+          </button>
+        </aside>
       </div>
     </div>
   );
