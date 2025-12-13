@@ -1,187 +1,214 @@
 const bcrypt = require("bcrypt");
-const User = require("../models/User");
+const User = require("../models/User"); // Asumsi User model memiliki field 'namaPengguna' dan 'kataSandi'
 const jwt = require("jsonwebtoken");
 
-// REGISTER USER (default role user)
+// ===============================================================
+// 1. REGISTER USER (Public)
+// ===============================================================
 const register = async (req, res) => {
-  try {
-    const { namaPengguna, email, kataSandi } = req.body;
+ try {
+ const { name, email, password } = req.body; 
 
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: "Email sudah terdaftar" });
-    }
+ const existingUser = await User.findOne({ email });
+ if (existingUser) {
+ return res.status(400).json({ message: "Email sudah terdaftar" });
+ }
 
-    const hashedPassword = await bcrypt.hash(kataSandi, 10);
+ const hashedPassword = await bcrypt.hash(password, 10); 
 
-    const newUser = new User({
-      namaPengguna,
-      email,
-      kataSandi: hashedPassword,
-      role: "user" // selalu user
-    });
+ const newUser = new User({
+ namaPengguna: name,  
+ email,
+ kataSandi: hashedPassword, 
+ role: "user" 
+ });
 
-    await newUser.save();
+ await newUser.save();
 
-    res.status(201).json({ message: "Registrasi user berhasil", user: newUser });
-  } catch (err) {
-    res.status(500).json({ message: "Terjadi kesalahan server", error: err.message });
-  }
+ const token = jwt.sign(
+ { id: newUser._id, email: newUser.email, role: newUser.role },
+ process.env.JWT_SECRET,
+ { expiresIn: "15m" }
+ );
+
+ res.status(201).json({ 
+ message: "Registrasi user berhasil", 
+ user: { id: newUser._id, namaPengguna: newUser.namaPengguna, email: newUser.email, role: newUser.role },
+ token 
+ });
+ } catch (err) {
+ console.error("🔴 Fatal Error during Registration:", err);
+ res.status(500).json({ 
+ message: "Terjadi kesalahan server saat registrasi. Cek log server untuk detail.", 
+ error: err.message 
+ });
+ }
 };
 
-// REGISTER ADMIN (khusus, jangan tampilkan di UI publik)
+// ===============================================================
+// 2. REGISTER ADMIN (Public)
+// ===============================================================
 const registerAdmin = async (req, res) => {
-  try {
-    const { namaPengguna, email, kataSandi } = req.body;
+ try {
+ const { name, email, password } = req.body; 
 
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: "Email sudah terdaftar" });
-    }
+ const existingUser = await User.findOne({ email });
+ if (existingUser) {
+ return res.status(400).json({ message: "Email sudah terdaftar" });
+ }
 
-    const hashedPassword = await bcrypt.hash(kataSandi, 10);
+        const hashedPassword = await bcrypt.hash(password, 10);
 
-    const newAdmin = new User({
-      namaPengguna,
-      email,
-      kataSandi: hashedPassword,
-      role: "admin"
-    });
+        const newAdmin = new User({
+            namaPengguna: name, 
+            email,
+            kataSandi: hashedPassword, 
+            role: "admin"
+        });
 
-    await newAdmin.save();
+        await newAdmin.save();
 
-    res.status(201).json({ message: "Registrasi admin berhasil", user: newAdmin });
-  } catch (err) {
-    res.status(500).json({ message: "Terjadi kesalahan server", error: err.message });
-  }
+        res.status(201).json({ message: "Registrasi admin berhasil", user: newAdmin });
+    } catch (err) {
+        console.error("🔴 Fatal Error during Admin Registration:", err);
+        res.status(500).json({ message: "Terjadi kesalahan server saat registrasi admin.", error: err.message });
+    }
 };
 
-// LOGIN (tetap sama)
+// ===============================================================
+// 3. LOGIN (Public)
+// ===============================================================
 const login = async (req, res) => {
-  try {
-    const { email, kataSandi } = req.body;
+    try {
+        const { email, password } = req.body; 
 
-    if (!email || !kataSandi) {
-      return res.status(400).json({ message: "Semua field wajib diisi" });
-    }
+        if (!email || !password) {
+            return res.status(400).json({ message: "Semua field wajib diisi" });
+        }
 
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(400).json({ message: "Email tidak ditemukan" });
-    }
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(400).json({ message: "Email tidak ditemukan" });
+        }
 
-    const isPasswordValid = await bcrypt.compare(kataSandi, user.kataSandi);
-    if (!isPasswordValid) {
-      return res.status(400).json({ message: "Password salah" });
-    }
+        const isPasswordValid = await bcrypt.compare(password, user.kataSandi); 
+        if (!isPasswordValid) {
+            return res.status(400).json({ message: "Password salah" });
+        }
 
-    // generate JWT
-    const token = jwt.sign(
-      { id: user._id, email: user.email, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "15m" }
-    );
+        const token = jwt.sign(
+            { id: user._id, email: user.email, role: user.role },
+            process.env.JWT_SECRET,
+            { expiresIn: "15m" }
+        );
 
-    res.json({
-      message: "Login berhasil",
-      token,
-      user: { id: user._id, namaPengguna: user.namaPengguna, email: user.email, role: user.role, profilePicture: user.profilePicture || null, }
-    });
-  } catch (err) {
-    res.status(500).json({ message: "Terjadi kesalahan server", error: err.message });
-  }
+        res.json({
+            message: "Login berhasil",
+            token,
+            user: { id: user._id, namaPengguna: user.namaPengguna, email: user.email, role: user.role, profilePicture: user.profilePicture || null }
+        });
+    } catch (err) {
+        console.error("🔴 Fatal Error during Login:", err);
+        res.status(500).json({ message: "Terjadi kesalahan server saat login.", error: err.message });
+    }
 };
 
-// RESET PASSWORD
+// ===============================================================
+// 4. CHANGE PASSWORD (Protected)
+// Endpoint: /reset-password (POST)
+// ===============================================================
 const resetPassword = async (req, res) => {
-  try {
-    console.log("Body request:", req.body); // Debug, cek data masuk
+    try {
+        // Menggunakan ID dari token JWT
+        const userId = req.user.id; 
+        
+        // Ambil input password baru
+        const { kataSandiBaru, ulangiKataSandiBaru } = req.body; 
 
-    const { email, kataSandiBaru, ulangiKataSandiBaru } = req.body;
+        // 1. Validasi input
+        if (!kataSandiBaru || !ulangiKataSandiBaru) {
+            return res.status(400).json({ message: "Kata sandi baru wajib diisi" });
+        }
+        if (kataSandiBaru !== ulangiKataSandiBaru) {
+            return res.status(400).json({ message: "Kata sandi baru tidak sama" });
+        }
 
-    // 1. Validasi field kosong
-    if (!email || !kataSandiBaru || !ulangiKataSandiBaru) {
-      return res.status(400).json({ message: "Semua field wajib diisi" });
-    }
+        // 2. Cari user
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User tidak ditemukan" });
+        }
 
-    // 2. Validasi password baru harus sama
-    if (kataSandiBaru !== ulangiKataSandiBaru) {
-      return res.status(400).json({ message: "Kata sandi baru tidak sama" });
-    }
+        // 3. Hash dan simpan password baru
+        const hashedPassword = await bcrypt.hash(kataSandiBaru, 10);
+        user.kataSandi = hashedPassword;
+        await user.save();
 
-    // 3. Cek apakah email ada di database
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(400).json({ message: "Email tidak ditemukan" });
-    }
+        return res.status(200).json({ message: "Kata sandi berhasil diubah" });
 
-    // 4. Hash password baru
-    const hashedPassword = await bcrypt.hash(kataSandiBaru, 10);
-    user.kataSandi = hashedPassword;
-    await user.save();
-
-    // 5. Response sukses
-    return res.status(200).json({ message: "Password berhasil diubah" });
-
-  } catch (err) {
-    console.error("Error reset password:", err);
-    return res.status(500).json({ message: "Terjadi kesalahan server", error: err.message });
-  }
+    } catch (err) {
+        console.error("Error change password:", err);
+        return res.status(500).json({ message: "Terjadi kesalahan server saat ubah kata sandi.", error: err.message });
+    }
 };
 
-// GET PROFILE (protected)
+// ===============================================================
+// 5. GET PROFILE (Protected)
+// Endpoint: /profile (GET)
+// ===============================================================
 const getProfile = async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id).select("-kataSandi");
-    if (!user) return res.status(404).json({ message: "User tidak ditemukan" });
+    try {
+        // req.user.id berasal dari token JWT
+        const user = await User.findById(req.user.id).select("-kataSandi");
+        if (!user) return res.status(404).json({ message: "User tidak ditemukan" });
 
-    res.json({ message: "Profil user", user });
-  } catch (err) {
-    res.status(500).json({ message: "Terjadi kesalahan server", error: err });
-  }
+        res.json({ message: "Profil user", user });
+    } catch (err) {
+        res.status(500).json({ message: "Terjadi kesalahan server", error: err.message });
+    }
 };
 
-// UPDATE PROFILE (protected, khusus USER)
+// ===============================================================
+// 6. UPDATE PROFILE (Protected)
+// Endpoint: /profile (PUT)
+// ===============================================================
 const updateProfile = async (req, res) => {
-  try {
-    // admin tidak boleh update profil di sini
-    if (req.user.role !== "user") {
-      return res.status(403).json({ message: "Admin tidak bisa mengubah profil di endpoint ini" });
-    }
+    try {
+        // Hanya izinkan user biasa
+        if (req.user.role !== "user") {
+            return res.status(403).json({ message: "Admin tidak bisa mengubah profil di endpoint ini" });
+        }
 
-    const { namaPengguna } = req.body;
+        const { name } = req.body; 
+        const user = await User.findById(req.user.id);
 
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      return res.status(404).json({ message: "User tidak ditemukan" });
-    }
+        if (!user) {
+            return res.status(404).json({ message: "User tidak ditemukan" });
+        }
 
-    // update nama jika dikirim
-    if (namaPengguna) {
-      user.namaPengguna = namaPengguna;
-    }
+        // Update nama jika dikirim
+        if (name) {
+            user.namaPengguna = name; 
+        }
 
-    // update foto kalau FE kirim file (pakai multer di route)
-    if (req.file) {
-      user.profilePicture = `/uploads/${req.file.filename}`;
-    }
+        // Hapus logika file/foto karena tidak dibutuhkan
+        
+        await user.save();
 
-    await user.save();
-
-    res.json({
-      message: "Profil berhasil diperbarui",
-      user: {
-        id: user._id,
-        namaPengguna: user.namaPengguna,
-        email: user.email,
-        profilePicture: user.profilePicture || null,
-      },
-    });
-  } catch (err) {
-    res
-      .status(500)
-      .json({ message: "Terjadi kesalahan server", error: err.message });
-  }
+        res.json({
+            message: "Profil berhasil diperbarui",
+            user: {
+                id: user._id,
+                namaPengguna: user.namaPengguna,
+                email: user.email,
+                profilePicture: user.profilePicture || null, 
+            },
+        });
+    } catch (err) {
+        res
+            .status(500)
+            .json({ message: "Terjadi kesalahan server saat update profile.", error: err.message });
+    }
 };
 
 module.exports = { register, registerAdmin, login, resetPassword, getProfile, updateProfile };

@@ -1,32 +1,50 @@
 const express = require("express");
 const {
-  register,
-  registerAdmin,
-  login,
-  resetPassword,
-  getProfile,
-  updateProfile,
+ register,
+ registerAdmin,
+ login,
+ resetPassword, // Sekarang digunakan untuk Change Password
+ getProfile,
+ updateProfile,
 } = require("../controllers/authControllers");
 const authMiddleware = require("../middleware/authMiddleware");
-const upload = require("../middleware/uploadMiddleware"); // ⬅️ tambahin ini
+
+// CATATAN: Middleware 'upload' DIHAPUS karena Anda tidak ingin fitur ubah foto.
+// Jika Anda ingin menggunakannya di route lain, biarkan import ini.
+// const upload = require("../middleware/uploadMiddleware"); 
 
 const router = express.Router();
 
-// Public routes
+// =========================================================
+// A. PUBLIC ROUTES (TIDAK BUTUH LOGIN)
+// =========================================================
 router.post("/register", register);
 router.post("/register-admin", registerAdmin);
 router.post("/login", login);
-router.post("/reset-password", resetPassword);
 
-// Protected routes
+// CATATAN PENTING:
+// Route ini sekarang digunakan untuk Change Password saat user SUDAH login.
+// Oleh karena itu, ia harus dipindahkan ke Protected Routes.
+
+// =========================================================
+// B. PROTECTED ROUTES (MEMBUTUHKAN TOKEN JWT)
+// =========================================================
+
+// GET PROFILE
+// Mengambil data profil user yang sedang login
 router.get("/profile", authMiddleware, getProfile);
 
-// UPDATE PROFILE + FOTO
+// UPDATE PROFILE (Hanya Nama/Data JSON)
+// Fungsi upload.single("profilePicture") DIHAPUS dari sini.
 router.put(
-  "/profile",
-  authMiddleware,
-  upload.single("profilePicture"), // ⬅️ FE kirim field ini
-  updateProfile
+ "/profile",
+ authMiddleware,
+ updateProfile // Hanya memproses data JSON (nama)
 );
+
+// CHANGE PASSWORD (Menggantikan fungsi reset password publik)
+// Memungkinkan user yang sudah login mengubah passwordnya sendiri
+router.post("/reset-password", authMiddleware, resetPassword); 
+
 
 module.exports = router;

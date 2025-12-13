@@ -1,37 +1,91 @@
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useState } from "react";
+import authAxios from "../utils/authAxios"; // <-- WAJIB: Axios instance with Token
 
 const methods = ["Dana", "Gopay", "Mandiri", "BCA"];
 
 export default function PaymentPage() {
-  const { eventId } = useParams();
   const navigate = useNavigate();
-  const { state } = useLocation();
+  const { state } = useLocation(); // Data dari CheckoutPage
+  
+  // Ambil data dari state
+  const { name, email, quantity, event: eventData } = state || {};
+
+  // State Form
   const [method, setMethod] = useState("Dana");
   const [account, setAccount] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const event = {
-    id: eventId,
-    title: "Seminar Nasional Blockchain",
-    price: "Rp. 100.000",
+  // Safegaurd: Jika state hilang (misal user refresh)
+  if (!eventData || !state) {
+    return <div className="text-center py-20 text-red-500">
+        Data pemesanan hilang. Mohon kembali ke halaman event.
+        <button onClick={() => navigate('/')} className="mt-4 block mx-auto text-primary underline">Kembali ke Dashboard</button>
+    </div>
+  }
+  
+  // Data Ringkasan
+  const totalHarga = quantity * eventData.hargaTiket;
+
+  const formatRupiah = (price) => {
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0
+    }).format(price);
   };
+  
 
-  const handlePay = (e) => {
+  // ===============================================================
+  // HANDLE PAYMENT AND BUY TICKET
+  // ===============================================================
+  const handlePay = async (e) => {
     e.preventDefault();
+    setError("");
+
     if (!account) {
       setError("Nomor akun wajib diisi");
       return;
     }
-    setError("");
-    // TODO: kirim ke backend, kalau berhasil:
-    navigate("/payment-success");
+    
+    // Konfirmasi final sebelum mengirim
+    const confirmBuy = window.confirm(`Apakah Anda yakin ingin membeli ${quantity} tiket ${eventData.namaEvent} dengan total harga ${formatRupiah(totalHarga)}?`);
+    if (!confirmBuy) return;
+
+
+    try {
+      setIsLoading(true);
+      
+      const payload = {
+        eventId: eventData._id,
+        jumlah: quantity,
+        namaLengkap: name,
+        email: email,
+        paymentMethod: method, // Dana, Gopay, Mandiri, BCA
+        nomorAkun: account,
+        // Backend juga akan menggunakan req.user.id (dari JWT)
+      };
+
+      // Panggil API BUY TICKET: POST /api/tickets/buy (Membutuhkan Token)
+      const response = await authAxios.post("/tickets/buy", payload);
+
+      // Jika berhasil (Status 201 Created)
+      navigate("/payment-success", { state: { ticket: response.data.ticket } });
+
+    } catch (err) {
+      console.error("Payment Error:", err.response?.data || err);
+      const errorMessage = err.response?.data?.message || "Pembelian tiket gagal. Coba lagi.";
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="bg-card rounded-3xl shadow-card p-6 lg:p-8 grid lg:grid-cols-[2fr,1.3fr] gap-8">
       <div>
-        <h1 className="text-xl font-semibold mb-1">Konfirmasi pemesanan</h1>
+        <h1 className="text-xl font-semibold mb-1">Konfirmasi Pembayaran</h1>
         <p className="text-sm text-muted mb-4">
           Pilih metode pembayaran dan pastikan nomor akun sudah benar.
         </p>
@@ -70,9 +124,10 @@ export default function PaymentPage() {
             <label className="text-sm font-medium">Nomor akun</label>
             <input
               className="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-              placeholder="Masukkan nomor akun"
+              placeholder="Masukkan nomor akun (misal: nomor HP untuk Dana/Gopay, atau nomor rekening)"
               value={account}
               onChange={(e) => setAccount(e.target.value)}
+              required
             />
             {error && (
               <p className="text-xs text-red-500 mt-1">{error}</p>
@@ -89,22 +144,26 @@ export default function PaymentPage() {
             </button>
             <button
               type="submit"
-              className="px-6 py-2 rounded-full bg-primary text-white text-sm font-semibold"
+              disabled={isLoading}
+              className="px-6 py-2 rounded-full bg-primary text-white text-sm font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
-              Buat Pesanan
+              {isLoading ? "Memproses Pesanan..." : "Buat Pesanan"}
             </button>
           </div>
         </form>
       </div>
 
+      {/* Ringkasan tiket */}
       <aside className="bg-body rounded-2xl p-5 space-y-4">
         <h2 className="font-semibold text-sm">Ringkasan tiketmu</h2>
-        <p className="text-sm">{event.title}</p>
-        <p className="text-sm text-muted">{state?.name}</p>
-        <p className="text-sm text-muted">{state?.email}</p>
+        <p className="text-sm">{eventData.namaEvent}</p>
+        <p className="text-sm text-muted">Pemesan: {state?.name}</p>
+        <p className="text-sm text-muted">Email: {state?.email}</p>
         <div className="mt-2 text-sm">
-          <p>Metode: {method}</p>
-          <p className="font-semibold mt-1">Total: {event.price}</p>
+          <p>Metode Pembayaran: {method}</p>
+          <p>Jumlah Tiket: {quantity}</p>
+          <hr className="my-2"/>
+          <p className="font-semibold mt-1 text-xl">Total: <span className="text-primary">{formatRupiah(totalHarga)}</span></p>
         </div>
       </aside>
     </div>

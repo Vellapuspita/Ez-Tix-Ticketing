@@ -6,7 +6,7 @@ const events = [
     price: "Rp 130.000",
     date: "19 Oktober 2025",
     time: "19.00 WIB",
-    image: "/download.png",         // gambar dari PUBLIC
+    image: "/download.png",         
   },
   {
     id: 2,
@@ -44,7 +44,7 @@ const recommended = [
     location: "Jimbaran, Bali",
     date: "13–14 September 2025",
     price: "170K",
-    image: "/dwonload.png",
+    image: "/download.png",
   },
   {
     id: 6,
