@@ -43,7 +43,7 @@ export default function ProfilePage() {
       setLoading(true);
       setError(null);
       
-      const response = await authAxios.get("/profile"); 
+      const response = await authAxios.get("auth/profile"); 
       
       const userData = response.data.user;
       setProfile(userData);
@@ -93,7 +93,7 @@ export default function ProfilePage() {
     try {
         if (isNameChanged) {
             // 1. UPDATE NAMA (PUT /profile)
-            await authAxios.put("/profile", { name: newName });
+            await authAxios.put("auth//profile", { name: newName });
             setProfile(prev => ({...prev, namaPengguna: newName}));
         }
 

@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // 1. Tentukan Base URL Backend
-const BASE_URL = 'http://localhost:4000/api/auth'; 
+const BASE_URL = 'http://localhost:4000/api'; 
 
 const authAxios = axios.create({
     baseURL: BASE_URL,
