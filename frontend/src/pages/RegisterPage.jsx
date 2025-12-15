@@ -1,26 +1,31 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import axios from "axios"; // <-- WAJIB: Import Axios untuk komunikasi API
+import axios from "axios";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
+
   const [form, setForm] = useState({
     name: "",
     email: "",
     password: "",
     confirmPassword: "",
   });
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false); // State untuk status loading
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleRegister = async (e) => { // <-- JADIKAN ASYNC
+  const handleRegister = async (e) => {
     e.preventDefault();
-    setError(""); // Reset error saat percobaan baru
+    setError("");
 
-    // 1. Validasi Password
     if (form.password !== form.confirmPassword) {
       setError("Kata sandi tidak cocok!");
       return;
@@ -29,38 +34,28 @@ export default function RegisterPage() {
     try {
       setIsLoading(true);
 
-      // 2. Panggilan API Register ke Backend
       const response = await axios.post(
-        "http://localhost:4000/api/auth/register", // <-- URL Backend Register
+        "http://localhost:4000/api/auth/register",
         {
           name: form.name,
           email: form.email,
           password: form.password,
-          // confirmPassword TIDAK dikirim ke backend
         }
       );
 
-      // 3. Penanganan Sukses (Status 200/201)
-      const token = response.data.token; // Asumsi backend mengirimkan token
+      const token = response.data.token;
       if (token) {
-          localStorage.setItem("token", token); 
-          // Setelah berhasil, arahkan ke halaman utama/dashboard
-          navigate("/"); 
+        localStorage.setItem("token", token);
+        navigate("/");
       } else {
-          // Jika backend tidak mengirim token tetapi sukses
-          navigate("/login"); // Arahkan ke login agar pengguna masuk
+        navigate("/login");
       }
-
-
     } catch (err) {
-      // 4. Penanganan Error
-      console.error("Registration Error:", err);
-      // Ambil pesan error dari respons backend (misalnya, Email sudah terdaftar)
-      const errorMessage = err.response?.data?.message || "Registrasi gagal. Coba lagi.";
+      const errorMessage =
+        err.response?.data?.message || "Registrasi gagal. Coba lagi.";
       setError(errorMessage);
-      
     } finally {
-      setIsLoading(false); // Selesai loading
+      setIsLoading(false);
     }
   };
 
@@ -77,12 +72,12 @@ export default function RegisterPage() {
       <p className="text-sm text-muted mb-6">Silakan buat akun anda</p>
 
       <form onSubmit={handleRegister} className="space-y-4">
-        {/* Input Nama */}
+        {/* Nama */}
         <div className="space-y-1 text-sm">
           <label className="font-medium">Nama Lengkap</label>
           <input
             name="name"
-            className="w-full rounded-xl border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-primary/50 text-sm"
+            className="w-full rounded-xl border px-3 py-2 text-sm"
             placeholder="Masukkan nama lengkap"
             onChange={handleChange}
             value={form.name}
@@ -90,13 +85,13 @@ export default function RegisterPage() {
           />
         </div>
 
-        {/* Input Email */}
+        {/* Email */}
         <div className="space-y-1 text-sm">
           <label className="font-medium">Email</label>
           <input
             name="email"
             type="email"
-            className="w-full rounded-xl border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-primary/50 text-sm"
+            className="w-full rounded-xl border px-3 py-2 text-sm"
             placeholder="Masukkan email"
             onChange={handleChange}
             value={form.email}
@@ -104,42 +99,54 @@ export default function RegisterPage() {
           />
         </div>
 
-        {/* Input Password */}
-        <div className="space-y-1 text-sm">
+        {/* Password */}
+        <div className="space-y-1 text-sm relative">
           <label className="font-medium">Kata Sandi</label>
           <input
             name="password"
-            type="password"
-            className="w-full rounded-xl border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-primary/50 text-sm"
+            type={showPassword ? "text" : "password"}
+            className="w-full rounded-xl border px-3 py-2 pr-10 text-sm"
             placeholder="Masukkan kata sandi"
             onChange={handleChange}
             value={form.password}
             required
           />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-9 text-gray-500"
+          >
+            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+          </button>
         </div>
 
-        {/* Input Confirm Password */}
-        <div className="space-y-1 text-sm">
+        {/* Confirm Password */}
+        <div className="space-y-1 text-sm relative">
           <label className="font-medium">Ulangi Kata Sandi</label>
           <input
             name="confirmPassword"
-            type="password"
-            className="w-full rounded-xl border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-primary/50 text-sm"
+            type={showConfirmPassword ? "text" : "password"}
+            className="w-full rounded-xl border px-3 py-2 pr-10 text-sm"
             placeholder="Ulangi kata sandi"
             onChange={handleChange}
             value={form.confirmPassword}
             required
           />
+          <button
+            type="button"
+            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+            className="absolute right-3 top-9 text-gray-500"
+          >
+            {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+          </button>
         </div>
 
-        {/* Tampilkan Error */}
         {error && <p className="text-xs text-red-500">{error}</p>}
 
-        {/* Tombol Submit dengan Status Loading */}
         <button
           type="submit"
           disabled={isLoading}
-          className="mt-4 w-full rounded-full bg-primary text-white py-2.5 text-sm font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
+          className="mt-4 w-full rounded-full bg-primary text-white py-2.5 text-sm font-semibold disabled:bg-gray-400"
         >
           {isLoading ? "Memproses..." : "Buat Akun"}
         </button>

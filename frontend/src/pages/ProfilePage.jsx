@@ -93,14 +93,14 @@ export default function ProfilePage() {
     try {
         if (isNameChanged) {
             // 1. UPDATE NAMA (PUT /profile)
-            await authAxios.put("auth//profile", { name: newName });
+            await authAxios.put("auth/profile", { name: newName });
             setProfile(prev => ({...prev, namaPengguna: newName}));
         }
 
         if (isPasswordSet) {
             // 2. UBAH PASSWORD (POST /reset-password)
             // Kunci field harus sama dengan yang diharapkan backend: kataSandiBaru, ulangiKataSandiBaru
-            await authAxios.post("/reset-password", {
+            await authAxios.post("/auth/reset-password", {
                 kataSandiBaru: passwordForm.newPassword,        
                 ulangiKataSandiBaru: passwordForm.confirmNewPassword, 
             });
