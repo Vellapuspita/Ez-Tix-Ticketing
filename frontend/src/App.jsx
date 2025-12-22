@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import MainLayout from "./components/layouts/MainLayout";
 import AuthLayout from "./components/layouts/AuthLayout";
+import AdminLayout from "./components/layouts/AdminLayout";
 
 // Import Pages untuk Customer
 import DashboardPage from "./pages/DashboardPage";
@@ -37,17 +38,17 @@ function ProtectedRoute({ children }) {
   return children;
 }
 
-// Fungsi untuk melindungi rute admin
-const isAuthenticatedAdmin = () => {
-  return !!localStorage.getItem("adminToken"); // Token admin disimpan di localStorage
-};
+// // Fungsi untuk melindungi rute admin
+// const isAuthenticatedAdmin = () => {
+//   return !!localStorage.getItem("adminToken"); // Token admin disimpan di localStorage
+// };
 
-function ProtectedRouteAdmin({ children }) {
-  if (!isAuthenticatedAdmin()) {
-    return <Navigate to="/admin/login" replace />;
-  }
-  return children;
-}
+// function ProtectedRouteAdmin({ children }) {
+//   if (!isAuthenticatedAdmin()) {
+//     return <Navigate to="/admin/login" replace />;
+//   }
+//   return children;
+// }
 
 export default function App() {
   return (
@@ -123,14 +124,15 @@ export default function App() {
           <Route path="/forgot-password" element={<ResetPasswordPage />} />
         </Route>
 
-        {/* ROUTES ADMIN */}
-        <Route element={<ProtectedRouteAdmin><MainLayout /></ProtectedRouteAdmin>}>
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/admin/events" element={<AdminEventList />} />
-          <Route path="/admin/events/create" element={<CreateEventPage />} />
-          <Route path="/admin/events/edit/:id" element={<EditEventPage />} />
-          <Route path="/admin/users" element={<AdminUsers />} />
-        </Route>
+      {/* ROUTES ADMIN (sementara tanpa login) */}
+<Route element={<AdminLayout />}>
+  <Route path="/admin" element={<AdminDashboard />} />
+  <Route path="/admin/events" element={<AdminEventList />} />
+  <Route path="/admin/events/create" element={<CreateEventPage />} />
+  <Route path="/admin/events/edit/:id" element={<EditEventPage />} />
+  <Route path="/admin/users" element={<AdminUsers />} />
+</Route>
+
 
         {/* fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
