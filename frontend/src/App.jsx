@@ -18,26 +18,40 @@ import CheckoutPage from "./pages/CheckoutPage";
 import PaymentPage from "./pages/PaymentPage";
 import PaymentSuccessPage from "./pages/PaymentSuccessPage";
 
-// Admin Pages (yang sudah ada)
+// Admin Pages
 import AdminDashboard from "./pages/AdminPage/AdminDashboard";
 import AdminEventList from "./pages/AdminPage/AdminEventList";
 import CreateEventPage from "./pages/AdminPage/CreateEventPage";
 import EditEventPage from "./pages/AdminPage/EditEventPage";
 import AdminUsers from "./pages/AdminPage/AdminUser";
 
-// Admin Pages (tambahan yang saya buat sesuai figma)
+// Admin Pages (tambahan figma)
 import AdminStatsPage from "./pages/AdminPage/AdminStatsPage";
 import AdminStatsDetailPage from "./pages/AdminPage/AdminStatsDetailPage";
 import AdminCheckinPage from "./pages/AdminPage/AdminCheckinPage";
 import AdminQRPage from "./pages/AdminPage/AdminQRPage";
 
-// ❗ sementara: state auth dummy
+// ✅ Admin Login Page
+import AdminLoginPage from "./pages/AdminPage/AdminLoginPage";
+
+/* ===================== AUTH (DUMMY) ===================== */
+// Customer auth
 const isAuthenticated = () => {
   return !!localStorage.getItem("token");
 };
 
 function ProtectedRoute({ children }) {
   if (!isAuthenticated()) return <Navigate to="/login" replace />;
+  return children;
+}
+
+// Admin auth
+const isAuthenticatedAdmin = () => {
+  return !!localStorage.getItem("adminToken");
+};
+
+function ProtectedRouteAdmin({ children }) {
+  if (!isAuthenticatedAdmin()) return <Navigate to="/admin/login" replace />;
   return children;
 }
 
@@ -113,32 +127,43 @@ export default function App() {
           />
         </Route>
 
-        {/* ===================== AUTH ===================== */}
+        {/* ✅ Admin login pakai layout auth yang sama */}
+          <Route path="/admin/login" element={<AdminLoginPage />} />
+
+        {/* ===================== AUTH (Customer + Admin Login) ===================== */}
         <Route element={<AuthLayout />}>
+          {/* Customer */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ResetPasswordPage />} />
         </Route>
 
-        {/* ===================== ADMIN (NESTED) ===================== */}
-        <Route path="/admin" element={<AdminLayout />}>
+        {/* ===================== ADMIN (PROTECTED + NESTED) ===================== */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRouteAdmin>
+              <AdminLayout />
+            </ProtectedRouteAdmin>
+          }
+        >
           {/* HOME ADMIN */}
           <Route index element={<AdminDashboard />} />
 
-          {/* EVENT CRUD (yang kamu sudah punya) */}
+          {/* EVENT CRUD */}
           <Route path="events" element={<AdminEventList />} />
           <Route path="events/create" element={<CreateEventPage />} />
           <Route path="events/edit/:id" element={<EditEventPage />} />
 
-          {/* USERS (yang kamu sudah punya) */}
+          {/* USERS */}
           <Route path="users" element={<AdminUsers />} />
 
-          {/* STATISTIK PENJUALAN (sesuai figma) */}
+          {/* STATISTIK */}
           <Route path="stats" element={<AdminStatsPage />} />
           <Route path="stats/:id" element={<AdminStatsDetailPage />} />
           <Route path="stats/:id/checkin" element={<AdminCheckinPage />} />
 
-          {/* QR CODE (sesuai figma) */}
+          {/* QR */}
           <Route path="qr" element={<AdminQRPage />} />
         </Route>
 

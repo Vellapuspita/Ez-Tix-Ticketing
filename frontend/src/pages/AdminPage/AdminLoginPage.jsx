@@ -29,8 +29,6 @@ export default function AdminLoginPage() {
 
     try {
       setIsLoading(true);
-
-      // ✅ Dummy login (simulasi request)
       await new Promise((r) => setTimeout(r, 500));
 
       if (email === DUMMY_ADMIN.email && password === DUMMY_ADMIN.password) {
@@ -41,7 +39,7 @@ export default function AdminLoginPage() {
       }
 
       setError("Login admin gagal. Periksa email dan kata sandi Anda.");
-    } catch (err) {
+    } catch {
       setError("Terjadi kesalahan saat login admin.");
     } finally {
       setIsLoading(false);
@@ -49,86 +47,145 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="flex flex-col justify-center h-full">
-      {/* optional link balik */}
-      <p className="text-xs text-muted mb-2">
-        Kembali ke{" "}
-        <Link to="/login" className="text-primary font-medium">
-          Login Customer
-        </Link>
-      </p>
+    <div className="min-h-screen w-full relative">
+      {/* Background konser */}
+      <div className="absolute inset-0">
+        <div
+          className="w-full h-full bg-cover bg-center"
+          style={{
+            backgroundImage: "url('/background.jpg')",
+          }}
+        />
+        {/* gelap tipis biar mirip figma */}
+        <div className="absolute inset-0 bg-black/35" />
+      </div>
 
-      <h1 className="text-2xl font-bold mb-1">LOGIN ADMIN EZ-TIX</h1>
-      <p className="text-sm text-muted mb-6">
-        Masuk untuk mengelola acara dan tiket
-      </p>
+      {/* Wrapper */}
+      <div className="relative min-h-screen flex items-center justify-center px-4 py-10">
+        {/* Card besar */}
+        <div className="w-full max-w-[980px] rounded-[22px] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.35)]">
+          <div className="grid grid-cols-1 md:grid-cols-2">
+            {/* LEFT: Form */}
+            <div className="bg-white px-8 sm:px-12 py-10 sm:py-12">
+              <div className="text-center">
+                <h1 className="text-[22px] sm:text-[24px] font-extrabold leading-snug text-black">
+                  SELAMAT DATANG <br /> DI EZ-TIX
+                </h1>
+                <p className="text-sm text-black/60 mt-2">
+                  Kelola tiket acaramu disini!
+                </p>
+              </div>
 
-      <form onSubmit={handleLoginAdmin} className="space-y-4">
-        {/* Email */}
-        <div className="space-y-1 text-sm">
-          <label className="font-medium">Email</label>
-          <input
-            type="email"
-            className={`w-full rounded-xl border px-3 py-2 text-sm ${
-              error ? "border-red-500" : "border-gray-300"
-            }`}
-            placeholder="Masukkan email admin"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <p className="text-[11px] text-black/50 mt-1">
-            Dummy: admin@eztix.com
-          </p>
+              <form onSubmit={handleLoginAdmin} className="mt-8 space-y-5">
+                {/* Email */}
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-black">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="Masukkan email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className={`w-full h-[44px] rounded-xl px-4 text-sm outline-none border shadow-sm
+                      ${error ? "border-red-500" : "border-black/15"}
+                    `}
+                    required
+                  />
+                </div>
+
+                {/* Password */}
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-black">
+                    Kata sandi
+                  </label>
+
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Masukkan kata sandi"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className={`w-full h-[44px] rounded-xl px-4 pr-11 text-sm outline-none border shadow-sm
+                        ${error ? "border-red-500" : "border-black/15"}
+                      `}
+                      required
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((s) => !s)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-black/50 hover:text-black"
+                      aria-label="Toggle password"
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setError("Fitur reset password admin belum tersedia.")
+                      }
+                      className="text-[11px] text-black/60 hover:text-black"
+                    >
+                      Lupa kata sandi?
+                    </button>
+                  </div>
+                </div>
+
+                {error && (
+                  <p className="text-xs text-red-500 text-center">{error}</p>
+                )}
+
+                {/* Button */}
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full h-[44px] rounded-xl bg-[#F28B3C] hover:bg-[#ea7f2e] text-white font-bold text-sm shadow disabled:bg-gray-400"
+                >
+                  {isLoading ? "Memproses..." : "Masuk"}
+                </button>
+
+                {/* Footer link */}
+                <p className="text-xs text-black/60 text-center pt-2">
+                  Belum punya akun?{" "}
+                  <Link
+                    to="/register"
+                    className="text-[#F28B3C] font-semibold hover:underline"
+                  >
+                    Daftar Sekarang!
+                  </Link>
+                </p>
+
+                {/* optional: link balik */}
+                <p className="text-[11px] text-black/40 text-center">
+                  <Link to="/login" className="hover:underline">
+                    Kembali ke login customer
+                  </Link>
+                </p>
+
+                {/* Dummy hint (kalau mau disembunyikan tinggal hapus) */}
+                <div className="mt-3 text-[11px] text-black/40 text-center">
+                  {/* Dummy admin: <b>admin@eztix.com</b> / <b>admin123</b> */}
+                </div>
+              </form>
+            </div>
+
+            {/* RIGHT: Panel logo */}
+            <div className="bg-[#EEF0E3] flex items-center justify-center p-8 sm:p-10">
+              <div className="w-full max-w-[360px] aspect-[4/3] bg-[#EEF0E3] flex items-center justify-center">
+                <img
+                  src="/logo.png"
+                  alt="EZ-TIX Ticketing"
+                  className="w-[80%] max-w-[320px] object-contain"
+                />
+              </div>
+            </div>
+          </div>
         </div>
-
-        {/* Password */}
-        <div className="space-y-1 text-sm relative">
-          <label className="font-medium">Kata sandi</label>
-          <input
-            type={showPassword ? "text" : "password"}
-            className={`w-full rounded-xl border px-3 py-2 pr-10 text-sm ${
-              error ? "border-red-500" : "border-gray-300"
-            }`}
-            placeholder="Masukkan password admin"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-9 text-gray-500"
-          >
-            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-          </button>
-
-          <p className="text-[11px] text-black/50 mt-1">
-            Dummy: admin123
-          </p>
-        </div>
-
-        {error && <p className="text-xs text-red-500">{error}</p>}
-
-        {/* optional */}
-        <div className="flex justify-between items-center text-xs mt-1">
-          <button
-            type="button"
-            onClick={() => setError("Fitur reset password admin belum tersedia.")}
-            className="text-muted hover:text-primary"
-          >
-            Lupa kata sandi?
-          </button>
-        </div>
-
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="mt-4 w-full rounded-full bg-primary text-white py-2.5 text-sm font-semibold disabled:bg-gray-400"
-        >
-          {isLoading ? "Memproses..." : "Masuk"}
-        </button>
-      </form>
+      </div>
     </div>
   );
 }
