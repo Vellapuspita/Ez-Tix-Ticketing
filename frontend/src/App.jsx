@@ -3,7 +3,7 @@ import MainLayout from "./components/layouts/MainLayout";
 import AuthLayout from "./components/layouts/AuthLayout";
 import AdminLayout from "./components/layouts/AdminLayout";
 
-// Import Pages untuk Customer
+// Customer Pages
 import DashboardPage from "./pages/DashboardPage";
 import EventListPage from "./pages/EventListPage";
 import EventDetailPage from "./pages/EventDetailPage";
@@ -18,47 +18,39 @@ import CheckoutPage from "./pages/CheckoutPage";
 import PaymentPage from "./pages/PaymentPage";
 import PaymentSuccessPage from "./pages/PaymentSuccessPage";
 
-// Import Pages untuk Admin
+// Admin Pages (yang sudah ada)
 import AdminDashboard from "./pages/AdminPage/AdminDashboard";
 import AdminEventList from "./pages/AdminPage/AdminEventList";
 import CreateEventPage from "./pages/AdminPage/CreateEventPage";
 import EditEventPage from "./pages/AdminPage/EditEventPage";
 import AdminUsers from "./pages/AdminPage/AdminUser";
 
+// Admin Pages (tambahan yang saya buat sesuai figma)
+import AdminStatsPage from "./pages/AdminPage/AdminStatsPage";
+import AdminStatsDetailPage from "./pages/AdminPage/AdminStatsDetailPage";
+import AdminCheckinPage from "./pages/AdminPage/AdminCheckinPage";
+import AdminQRPage from "./pages/AdminPage/AdminQRPage";
+
 // ❗ sementara: state auth dummy
 const isAuthenticated = () => {
   return !!localStorage.getItem("token");
 };
 
-// Fungsi untuk melindungi rute customer
 function ProtectedRoute({ children }) {
-  if (!isAuthenticated()) {
-    return <Navigate to="/login" replace />;
-  }
+  if (!isAuthenticated()) return <Navigate to="/login" replace />;
   return children;
 }
-
-// // Fungsi untuk melindungi rute admin
-// const isAuthenticatedAdmin = () => {
-//   return !!localStorage.getItem("adminToken"); // Token admin disimpan di localStorage
-// };
-
-// function ProtectedRouteAdmin({ children }) {
-//   if (!isAuthenticatedAdmin()) {
-//     return <Navigate to="/admin/login" replace />;
-//   }
-//   return children;
-// }
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* LAYOUT UTAMA (NAVBAR + CONTENT) */}
+        {/* ===================== CUSTOMER ===================== */}
         <Route element={<MainLayout />}>
           <Route path="/" element={<DashboardPage />} />
           <Route path="/events" element={<EventListPage />} />
           <Route path="/events/:id" element={<EventDetailPage />} />
+
           <Route
             path="/tickets"
             element={
@@ -67,6 +59,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/profile"
             element={
@@ -91,6 +84,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/checkout/:eventId"
             element={
@@ -99,6 +93,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/payment/:eventId"
             element={
@@ -107,6 +102,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/payment-success"
             element={
@@ -117,22 +113,34 @@ export default function App() {
           />
         </Route>
 
-        {/* LAYOUT AUTH (BACKGROUND KONSER + CARD PUTIH) */}
+        {/* ===================== AUTH ===================== */}
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ResetPasswordPage />} />
         </Route>
 
-      {/* ROUTES ADMIN (sementara tanpa login) */}
-<Route element={<AdminLayout />}>
-  <Route path="/admin" element={<AdminDashboard />} />
-  <Route path="/admin/events" element={<AdminEventList />} />
-  <Route path="/admin/events/create" element={<CreateEventPage />} />
-  <Route path="/admin/events/edit/:id" element={<EditEventPage />} />
-  <Route path="/admin/users" element={<AdminUsers />} />
-</Route>
+        {/* ===================== ADMIN (NESTED) ===================== */}
+        <Route path="/admin" element={<AdminLayout />}>
+          {/* HOME ADMIN */}
+          <Route index element={<AdminDashboard />} />
 
+          {/* EVENT CRUD (yang kamu sudah punya) */}
+          <Route path="events" element={<AdminEventList />} />
+          <Route path="events/create" element={<CreateEventPage />} />
+          <Route path="events/edit/:id" element={<EditEventPage />} />
+
+          {/* USERS (yang kamu sudah punya) */}
+          <Route path="users" element={<AdminUsers />} />
+
+          {/* STATISTIK PENJUALAN (sesuai figma) */}
+          <Route path="stats" element={<AdminStatsPage />} />
+          <Route path="stats/:id" element={<AdminStatsDetailPage />} />
+          <Route path="stats/:id/checkin" element={<AdminCheckinPage />} />
+
+          {/* QR CODE (sesuai figma) */}
+          <Route path="qr" element={<AdminQRPage />} />
+        </Route>
 
         {/* fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

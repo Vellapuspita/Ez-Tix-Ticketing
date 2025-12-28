@@ -1,5 +1,6 @@
 import { Outlet, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { ConfirmDialog } from "../admin/AdminUI"; // ✅ sesuaikan path kalau beda
 
 const menu = [
   { to: "/admin", label: "Home", icon: "home" },
@@ -10,6 +11,10 @@ const menu = [
 
 export default function AdminLayout() {
   const [open, setOpen] = useState(false);
+
+  // ✅ state untuk popup logout
+  const [openLogout, setOpenLogout] = useState(false);
+
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -19,8 +24,20 @@ export default function AdminLayout() {
   const isActive = (path) =>
     location.pathname === path || location.pathname.startsWith(path + "/");
 
+  // ✅ buka popup logout
   const handleLogout = () => {
-    navigate("/");
+    setOpenLogout(true);
+  };
+
+  // ✅ kalau user klik "Iya"
+  const confirmLogout = () => {
+    // hapus token kalau ada
+    localStorage.removeItem("token");
+    localStorage.removeItem("adminToken");
+
+    setOpenLogout(false);
+    setOpen(false); // tutup drawer kalau sedang di mobile
+    navigate("/"); // bisa ganti ke "/login" kalau mau
   };
 
   const SidebarContent = () => (
@@ -59,7 +76,9 @@ export default function AdminLayout() {
               <span className="material-icons text-black">{m.icon}</span>
               <span className="font-semibold text-black">{m.label}</span>
             </div>
-            <span className="material-icons text-black opacity-70">chevron_right</span>
+            <span className="material-icons text-black opacity-70">
+              chevron_right
+            </span>
           </NavLink>
         ))}
       </div>
@@ -136,6 +155,15 @@ export default function AdminLayout() {
           <Outlet />
         </main>
       </div>
+
+      {/* ✅ POPUP LOGOUT (sesuai figma: "Anda mau keluar?") */}
+      <ConfirmDialog
+        open={openLogout}
+        title="Keluar"
+        message="Anda mau keluar?"
+        onYes={confirmLogout}
+        onNo={() => setOpenLogout(false)}
+      />
     </div>
   );
 }
