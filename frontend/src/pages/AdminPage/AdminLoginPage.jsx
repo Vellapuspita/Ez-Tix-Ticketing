@@ -1,12 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
-
-const DUMMY_ADMIN = {
-  email: "admin@eztix.com",
-  password: "admin123",
-  name: "Arya Genta",
-};
+import axios from "axios";
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
@@ -22,6 +17,7 @@ export default function AdminLoginPage() {
     e.preventDefault();
     setError("");
 
+    // Validasi dasar agar tidak mengirim request kosong ke backend
     if (!email || !password) {
       setError("Email atau kata sandi tidak boleh kosong.");
       return;
@@ -29,18 +25,33 @@ export default function AdminLoginPage() {
 
     try {
       setIsLoading(true);
-      await new Promise((r) => setTimeout(r, 500));
 
-      if (email === DUMMY_ADMIN.email && password === DUMMY_ADMIN.password) {
-        localStorage.setItem("adminToken", "dummy-admin-token");
-        localStorage.setItem("adminName", DUMMY_ADMIN.name);
-        navigate("/admin", { replace: true });
+      // 1. Integrasi API Login menggunakan endpoint dari authController
+      const response = await axios.post("http://localhost:4000/api/auth/login", {
+        email: email,
+        password: password,
+      });
+
+      const { token, user } = response.data;
+
+      // 2. Validasi Role: Memastikan user yang login memiliki role 'admin'
+      if (user.role !== "admin") {
+        setError("Akses ditolak. Akun ini bukan merupakan akun Admin.");
         return;
       }
 
-      setError("Login admin gagal. Periksa email dan kata sandi Anda.");
-    } catch {
-      setError("Terjadi kesalahan saat login admin.");
+      // 3. Simpan data autentikasi ke localStorage agar bisa digunakan oleh admin dashboard
+      localStorage.setItem("token", token);
+      localStorage.setItem("adminName", user.namaPengguna);
+      localStorage.setItem("role", user.role);
+
+      // 4. Navigasi ke halaman utama admin
+      navigate("/admin", { replace: true });
+
+    } catch (err) {
+      // Menampilkan pesan error spesifik dari backend (misal: "Password salah")
+      const message = err.response?.data?.message || "Terjadi kesalahan saat login admin.";
+      setError(message);
     } finally {
       setIsLoading(false);
     }
@@ -48,7 +59,7 @@ export default function AdminLoginPage() {
 
   return (
     <div className="min-h-screen w-full relative">
-      {/* Background konser */}
+      {/* Background Section */}
       <div className="absolute inset-0">
         <div
           className="w-full h-full bg-cover bg-center"
@@ -56,16 +67,15 @@ export default function AdminLoginPage() {
             backgroundImage: "url('/background.jpg')",
           }}
         />
-        {/* gelap tipis biar mirip figma */}
         <div className="absolute inset-0 bg-black/35" />
       </div>
 
-      {/* Wrapper */}
+      {/* Wrapper Form */}
       <div className="relative min-h-screen flex items-center justify-center px-4 py-10">
-        {/* Card besar */}
         <div className="w-full max-w-[980px] rounded-[22px] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.35)]">
           <div className="grid grid-cols-1 md:grid-cols-2">
-            {/* LEFT: Form */}
+            
+            {/* LEFT SIDE: Login Form */}
             <div className="bg-white px-8 sm:px-12 py-10 sm:py-12">
               <div className="text-center">
                 <h1 className="text-[22px] sm:text-[24px] font-extrabold leading-snug text-black">
@@ -77,112 +87,93 @@ export default function AdminLoginPage() {
               </div>
 
               <form onSubmit={handleLoginAdmin} className="mt-8 space-y-5">
-                {/* Email */}
+                {/* Email Input */}
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-black">
                     Email
                   </label>
                   <input
                     type="email"
-                    placeholder="Masukkan email"
+                    placeholder="Masukkan email admin"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className={`w-full h-[44px] rounded-xl px-4 text-sm outline-none border shadow-sm
-                      ${error ? "border-red-500" : "border-black/15"}
+                    className={`w-full h-[44px] rounded-xl px-4 text-sm outline-none border shadow-sm transition-all
+                      ${error ? "border-red-500 ring-1 ring-red-500" : "border-black/15 focus:border-[#F28B3C]"}
                     `}
                     required
                   />
                 </div>
 
-                {/* Password */}
+                {/* Password Input */}
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-black">
                     Kata sandi
                   </label>
-
                   <div className="relative">
                     <input
                       type={showPassword ? "text" : "password"}
                       placeholder="Masukkan kata sandi"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className={`w-full h-[44px] rounded-xl px-4 pr-11 text-sm outline-none border shadow-sm
-                        ${error ? "border-red-500" : "border-black/15"}
+                      className={`w-full h-[44px] rounded-xl px-4 pr-11 text-sm outline-none border shadow-sm transition-all
+                        ${error ? "border-red-500 ring-1 ring-red-500" : "border-black/15 focus:border-[#F28B3C]"}
                       `}
                       required
                     />
-
                     <button
                       type="button"
                       onClick={() => setShowPassword((s) => !s)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-black/50 hover:text-black"
-                      aria-label="Toggle password"
                     >
                       {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   </div>
-
-                  <div className="flex justify-end">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setError("Fitur reset password admin belum tersedia.")
-                      }
-                      className="text-[11px] text-black/60 hover:text-black"
-                    >
-                      Lupa kata sandi?
-                    </button>
-                  </div>
                 </div>
 
+                {/* Error Alert */}
                 {error && (
-                  <p className="text-xs text-red-500 text-center">{error}</p>
+                  <div className="bg-red-50 border-l-4 border-red-500 p-3 mt-2">
+                    <p className="text-[11px] text-red-600 font-medium">{error}</p>
+                  </div>
                 )}
 
-                {/* Button */}
+                {/* Submit Button */}
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full h-[44px] rounded-xl bg-[#F28B3C] hover:bg-[#ea7f2e] text-white font-bold text-sm shadow disabled:bg-gray-400"
+                  className="w-full h-[44px] rounded-xl bg-[#F28B3C] hover:bg-[#ea7f2e] text-white font-bold text-sm shadow-md transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
-                  {isLoading ? "Memproses..." : "Masuk"}
+                  {isLoading ? "Memverifikasi Akun..." : "Masuk Sebagai Admin"}
                 </button>
 
-                {/* Footer link */}
-                <p className="text-xs text-black/60 text-center pt-2">
-                  Belum punya akun?{" "}
-                  <Link
-                    to="/register"
-                    className="text-[#F28B3C] font-semibold hover:underline"
-                  >
-                    Daftar Sekarang!
-                  </Link>
-                </p>
-
-                {/* optional: link balik */}
-                <p className="text-[11px] text-black/40 text-center">
-                  <Link to="/login" className="hover:underline">
-                    Kembali ke login customer
-                  </Link>
-                </p>
-
-                {/* Dummy hint (kalau mau disembunyikan tinggal hapus) */}
-                <div className="mt-3 text-[11px] text-black/40 text-center">
-                  {/* Dummy admin: <b>admin@eztix.com</b> / <b>admin123</b> */}
+                {/* Optional Links */}
+                <div className="space-y-3 pt-2">
+                    <p className="text-xs text-black/60 text-center">
+                    Belum punya akun admin?{" "}
+                    <Link to="/register" className="text-[#F28B3C] font-semibold hover:underline">
+                        Daftar Admin
+                    </Link>
+                    </p>
+                    <p className="text-[11px] text-black/40 text-center">
+                    <Link to="/login" className="hover:underline">
+                        Kembali ke login customer
+                    </Link>
+                    </p>
                 </div>
               </form>
             </div>
 
-            {/* RIGHT: Panel logo */}
+            {/* RIGHT SIDE: Branding/Logo */}
             <div className="bg-[#EEF0E3] flex items-center justify-center p-8 sm:p-10">
-              <div className="w-full max-w-[360px] aspect-[4/3] bg-[#EEF0E3] flex items-center justify-center">
+              <div className="w-full max-w-[360px] flex items-center justify-center">
                 <img
                   src="/logo.png"
                   alt="EZ-TIX Ticketing"
-                  className="w-[80%] max-w-[320px] object-contain"
+                  className="w-[80%] max-w-[320px] object-contain drop-shadow-sm"
                 />
               </div>
             </div>
+
           </div>
         </div>
       </div>
