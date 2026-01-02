@@ -28,7 +28,7 @@ export default function LoginPage() {
         "http://localhost:4000/api/auth/login",
         {
           email,
-          password,
+          kataSandi: password,
         }
       );
 

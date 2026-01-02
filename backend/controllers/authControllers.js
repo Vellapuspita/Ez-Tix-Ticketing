@@ -49,69 +49,155 @@ const register = async (req, res) => {
 // 2. REGISTER ADMIN (Public)
 // ===============================================================
 const registerAdmin = async (req, res) => {
- try {
- const { name, email, password } = req.body; 
+  try {
+    const { name, namaPengguna, email, password, kataSandi } = req.body;
 
- const existingUser = await User.findOne({ email });
- if (existingUser) {
- return res.status(400).json({ message: "Email sudah terdaftar" });
- }
+    const finalName = name || namaPengguna;
+    const finalPassword = password || kataSandi;
 
-        const hashedPassword = await bcrypt.hash(password, 10);
+    if (!finalName || !email || !finalPassword) {
+      return res.status(400).json({ message: "Semua field wajib diisi" });
+    }
 
-        const newAdmin = new User({
-            namaPengguna: name, 
-            email,
-            kataSandi: hashedPassword, 
-            role: "admin"
-        });
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: "Email sudah terdaftar" });
+    }
 
-        await newAdmin.save();
+    const hashedPassword = await bcrypt.hash(finalPassword, 10);
 
-        res.status(201).json({ message: "Registrasi admin berhasil", user: newAdmin });
-    } catch (err) {
-        console.error("🔴 Fatal Error during Admin Registration:", err);
-        res.status(500).json({ message: "Terjadi kesalahan server saat registrasi admin.", error: err.message });
-    }
+    const newAdmin = new User({
+      namaPengguna: finalName,
+      email,
+      kataSandi: hashedPassword,
+      role: "admin",
+    });
+
+    await newAdmin.save();
+
+    return res.status(201).json({
+      message: "Registrasi admin berhasil",
+      user: {
+        id: newAdmin._id,
+        namaPengguna: newAdmin.namaPengguna,
+        email: newAdmin.email,
+        role: newAdmin.role,
+      },
+    });
+  } catch (err) {
+    console.error("🔴 Fatal Error during Admin Registration:", err);
+    return res.status(500).json({
+      message: "Terjadi kesalahan server saat registrasi admin.",
+      error: err.message,
+    });
+  }
 };
 
+
+
+const loginAdmin = async (req, res) => {
+  try {
+    const { email, kataSandi } = req.body;
+
+    if (!email || !kataSandi) {
+      return res.status(400).json({ message: "Semua field wajib diisi" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: "Email tidak ditemukan" });
+    }
+
+    const isPasswordValid = await bcrypt.compare(kataSandi, user.kataSandi);
+    if (!isPasswordValid) {
+      return res.status(400).json({ message: "Password salah" });
+    }
+
+    // ✅ khusus admin
+    if (user.role !== "admin") {
+      return res.status(403).json({ message: "Akun ini bukan admin." });
+    }
+
+    const token = jwt.sign(
+      { id: user._id, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "30m" }
+    );
+
+    return res.json({
+      message: "Login admin berhasil",
+      token,
+      user: {
+        id: user._id,
+        namaPengguna: user.namaPengguna,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (err) {
+    console.error("🔴 Fatal Error during Admin Login:", err);
+    return res
+      .status(500)
+      .json({ message: "Terjadi kesalahan server saat login admin.", error: err.message });
+  }
+};
+
+
 // ===============================================================
-// 3. LOGIN (Public)
+// 3. LOGIN USER (Public)  -> KHUSUS role "user"
 // ===============================================================
 const login = async (req, res) => {
-    try {
-        const { email, password } = req.body; 
+  try {
+    const { email, kataSandi } = req.body;
 
-        if (!email || !password) {
-            return res.status(400).json({ message: "Semua field wajib diisi" });
-        }
+    if (!email || !kataSandi) {
+      return res.status(400).json({ message: "Semua field wajib diisi" });
+    }
 
-        const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(400).json({ message: "Email tidak ditemukan" });
-        }
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: "Email tidak ditemukan" });
+    }
 
-        const isPasswordValid = await bcrypt.compare(password, user.kataSandi); 
-        if (!isPasswordValid) {
-            return res.status(400).json({ message: "Password salah" });
-        }
+    const isPasswordValid = await bcrypt.compare(kataSandi, user.kataSandi);
+    if (!isPasswordValid) {
+      return res.status(400).json({ message: "Password salah" });
+    }
 
-        const token = jwt.sign(
-            { id: user._id, email: user.email, role: user.role },
-            process.env.JWT_SECRET,
-            { expiresIn: "30m" }
-        );
+    // 🔐 KUNCI UTAMA: BLOK ADMIN
+    if (user.role !== "user") {
+      return res.status(403).json({
+        message: "Akun admin tidak bisa login di halaman user.",
+      });
+    }
 
-        res.json({
-            message: "Login berhasil",
-            token,
-            user: { id: user._id, namaPengguna: user.namaPengguna, email: user.email, role: user.role, profilePicture: user.profilePicture || null }
-        });
-    } catch (err) {
-        console.error("🔴 Fatal Error during Login:", err);
-        res.status(500).json({ message: "Terjadi kesalahan server saat login.", error: err.message });
-    }
+    const token = jwt.sign(
+      { id: user._id, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "30m" }
+    );
+
+    return res.json({
+      message: "Login berhasil",
+      token,
+      user: {
+        id: user._id,
+        namaPengguna: user.namaPengguna,
+        email: user.email,
+        role: user.role,
+        profilePicture: user.profilePicture || null,
+      },
+    });
+  } catch (err) {
+    console.error("🔴 Fatal Error during Login:", err);
+    return res.status(500).json({
+      message: "Terjadi kesalahan server saat login.",
+      error: err.message,
+    });
+  }
 };
+
+
 
 // ===============================================================
 // 4. CHANGE PASSWORD (Protected)
@@ -211,4 +297,4 @@ const updateProfile = async (req, res) => {
     }
 };
 
-module.exports = { register, registerAdmin, login, resetPassword, getProfile, updateProfile };
+module.exports = { register, registerAdmin, login, loginAdmin, resetPassword, getProfile, updateProfile };

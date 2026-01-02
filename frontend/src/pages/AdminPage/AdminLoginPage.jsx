@@ -27,9 +27,9 @@ export default function AdminLoginPage() {
       setIsLoading(true);
 
       // ✅ Integrasi API Login menggunakan axios instance (baseURL dari env)
-      const response = await api.post("/auth/login", {
+      const response = await api.post("/auth/admin/login", {
         email,
-        password,
+        kataSandi: password,
       });
 
       const { token, user } = response.data;

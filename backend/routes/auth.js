@@ -3,6 +3,7 @@ const {
  register,
  registerAdmin,
  login,
+ loginAdmin,
  resetPassword, // Sekarang digunakan untuk Change Password
  getProfile,
  updateProfile,
@@ -21,6 +22,7 @@ const router = express.Router();
 router.post("/register", register);
 router.post("/register-admin", registerAdmin);
 router.post("/login", login);
+router.post("/admin/login", loginAdmin);
 
 // CATATAN PENTING:
 // Route ini sekarang digunakan untuk Change Password saat user SUDAH login.
