@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { dummyEvents, rupiah, totalRevenue } from "../../data/adminDummy";
 import { ConfirmDialog, Modal, Pagination, Toast } from "../../components/admin/AdminUI";
 import { useNavigate } from "react-router-dom";
@@ -6,6 +6,8 @@ import { useNavigate } from "react-router-dom";
 export default function AdminDashboard() {
   const navigate = useNavigate();
 
+  // ✅ events format user/backend:
+  // { id, namaEvent, tanggal, waktu, lokasi, kapasitas, hargaTiket, deskripsi, penyelenggara, gambar, terjual? }
   const [events, setEvents] = useState(dummyEvents);
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
@@ -23,16 +25,23 @@ export default function AdminDashboard() {
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
     if (!s) return events;
-    return events.filter((e) => e.title.toLowerCase().includes(s) || e.organizer.toLowerCase().includes(s));
+
+    return events.filter((e) => {
+      const name = (e.namaEvent || "").toLowerCase();
+      const loc = (e.lokasi || "").toLowerCase();
+      const org = (e.penyelenggara || "").toLowerCase();
+      return name.includes(s) || loc.includes(s) || org.includes(s);
+    });
   }, [events, q]);
 
   const pageSize = 3;
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
 
-  const totalCustomer = 20; // dummy (samakan figma)
-  const totalTicket = events.reduce((acc, e) => acc + e.quota, 0);
-  const revenue = totalRevenue(events);
+  const totalCustomer = 20; // dummy
+  const totalTicket = events.reduce((acc, e) => acc + Number(e.kapasitas || 0), 0);
+
+  const revenue = totalRevenue(events.map((e) => ({ ...e, price: e.hargaTiket })));
 
   const openCreate = () => {
     setFormMode("create");
@@ -53,7 +62,7 @@ export default function AdminDashboard() {
 
   const handleSave = (payload) => {
     if (formMode === "create") {
-      const newEv = { ...payload, id: "ev" + Date.now(), sold: 0, visitors: 0 };
+      const newEv = { ...payload, id: "ev" + Date.now(), terjual: 0 };
       setEvents((prev) => [newEv, ...prev]);
       setToast({ open: true, text: "Acara baru telah berhasil dibuat" });
     } else {
@@ -73,7 +82,7 @@ export default function AdminDashboard() {
     <div className="w-full">
       <Toast open={toast.open} text={toast.text} onClose={() => setToast({ open: false, text: "" })} />
 
-      {/* STATS (punyamu) */}
+      {/* STATS */}
       <div className="w-full bg-[#F6B14A] rounded-[22px] sm:rounded-[28px] px-5 sm:px-8 lg:px-10 py-6 sm:py-7 lg:py-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <div className="flex items-center gap-4">
@@ -102,7 +111,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* ACTION BAR (punyamu) */}
+      {/* ACTION BAR */}
       <div className="mt-6 sm:mt-8 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <button
           onClick={openCreate}
@@ -139,34 +148,35 @@ export default function AdminDashboard() {
           <div className="space-y-4">
             {paged.map((ev) => (
               <div key={ev.id} className="bg-[#EEF0E3] rounded-2xl p-4 flex flex-col lg:flex-row gap-4">
-                <img
-                  src={ev.image}
-                  alt={ev.title}
-                  className="w-full lg:w-[150px] h-[110px] rounded-xl object-cover"
-                />
+                <img src={ev.gambar} alt={ev.namaEvent} className="w-full lg:w-[150px] h-[110px] rounded-xl object-cover" />
 
                 <div className="flex-1">
-                  <p className="font-extrabold text-black">{ev.title}</p>
+                  <p className="font-extrabold text-black">{ev.namaEvent}</p>
+
                   <div className="mt-1 text-sm text-black/70 space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="material-icons text-[16px]">location_on</span>
-                      <span>{ev.organizer}</span>
+                      <span>{ev.lokasi}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="material-icons text-[16px]">person</span>
+                      <span>{ev.penyelenggara || "-"}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="material-icons text-[16px]">event</span>
-                      <span>{ev.date}</span>
+                      <span>{ev.tanggal}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="material-icons text-[16px]">confirmation_number</span>
-                      <span>{ev.quota} Tiket Tersedia</span>
+                      <span>{ev.kapasitas} Tiket Tersedia</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="material-icons text-[16px]">schedule</span>
-                      <span>{ev.time}</span>
+                      <span>{ev.waktu}</span>
                     </div>
                   </div>
 
-                  <p className="mt-2 text-green-700 font-extrabold text-sm">{rupiah(ev.price)}</p>
+                  <p className="mt-2 text-green-700 font-extrabold text-sm">{rupiah(ev.hargaTiket)}</p>
                 </div>
 
                 {/* Right actions + QR mock */}
@@ -178,6 +188,7 @@ export default function AdminDashboard() {
                     >
                       <span className="material-icons text-[18px]">edit</span> Edit
                     </button>
+
                     <button
                       onClick={() => askDelete(ev)}
                       className="px-3 py-2 rounded-xl bg-red-500 text-white font-bold text-sm hover:bg-red-600 flex items-center gap-1"
@@ -208,13 +219,7 @@ export default function AdminDashboard() {
       <Pagination page={page} totalPages={totalPages} onChange={setPage} />
 
       {/* FORM MODAL */}
-      <EventFormModal
-        open={openForm}
-        mode={formMode}
-        initial={selected}
-        onClose={() => setOpenForm(false)}
-        onSave={handleSave}
-      />
+      <EventFormModal open={openForm} mode={formMode} initial={selected} onClose={() => setOpenForm(false)} onSave={handleSave} />
 
       {/* DELETE CONFIRM */}
       <ConfirmDialog
@@ -229,86 +234,126 @@ export default function AdminDashboard() {
 }
 
 function EventFormModal({ open, mode, initial, onClose, onSave }) {
-  const [img, setImg] = useState(initial?.image || "");
-  const [title, setTitle] = useState(initial?.title || "");
-  const [date, setDate] = useState(initial?.date || "");
-  const [time, setTime] = useState(initial?.time || "");
-  const [organizer, setOrganizer] = useState(initial?.organizer || "");
-  const [quota, setQuota] = useState(initial?.quota || 0);
-  const [price, setPrice] = useState(initial?.price || 0);
+  const [posterFile, setPosterFile] = useState(null);
+  const [posterPreview, setPosterPreview] = useState(initial?.gambar || "");
 
-  // reset saat buka modal
-  useMemo(() => {
-    if (!open) return null;
-    setImg(initial?.image || "");
-    setTitle(initial?.title || "");
-    setDate(initial?.date || "");
-    setTime(initial?.time || "");
-    setOrganizer(initial?.organizer || "");
-    setQuota(initial?.quota || 0);
-    setPrice(initial?.price || 0);
-    return null;
+  const [namaEvent, setNamaEvent] = useState(initial?.namaEvent || "");
+  const [deskripsi, setDeskripsi] = useState(initial?.deskripsi || "");
+  const [tanggal, setTanggal] = useState(initial?.tanggal || "");
+  const [waktu, setWaktu] = useState(initial?.waktu || "");
+  const [lokasi, setLokasi] = useState(initial?.lokasi || "");
+  const [penyelenggara, setPenyelenggara] = useState(initial?.penyelenggara || "");
+  const [kapasitas, setKapasitas] = useState(initial?.kapasitas || 0);
+  const [hargaTiket, setHargaTiket] = useState(initial?.hargaTiket || 0);
+
+  useEffect(() => {
+    if (!open) return;
+
+    setPosterFile(null);
+    setPosterPreview(initial?.gambar || "");
+
+    setNamaEvent(initial?.namaEvent || "");
+    setDeskripsi(initial?.deskripsi || "");
+    setTanggal(initial?.tanggal || "");
+    setWaktu(initial?.waktu || "");
+    setLokasi(initial?.lokasi || "");
+    setPenyelenggara(initial?.penyelenggara || "");
+    setKapasitas(initial?.kapasitas || 0);
+    setHargaTiket(initial?.hargaTiket || 0);
   }, [open, initial]);
 
   const submit = (e) => {
     e.preventDefault();
+
     onSave({
-      image:
-        img ||
+      namaEvent,
+      deskripsi,
+      tanggal,
+      waktu,
+      lokasi,
+      penyelenggara,
+      kapasitas: Number(kapasitas),
+      hargaTiket: Number(hargaTiket),
+      gambar:
+        posterPreview ||
+        initial?.gambar ||
         "https://images.unsplash.com/photo-1540575467063-178a50c2df87?q=80&w=800&auto=format&fit=crop",
-      title,
-      date,
-      time,
-      organizer,
-      quota: Number(quota),
-      price: Number(price),
+      posterFile,
     });
   };
 
   return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      title={mode === "create" ? "Buat acara" : "Edit acara"}
-      widthClass="max-w-[820px]"
-    >
-      <form onSubmit={submit} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left upload box */}
-        <div className="bg-[#F6F6F8] rounded-2xl p-6 flex flex-col items-center justify-center gap-3 border border-black/10">
-          <span className="material-icons text-[96px] text-black/70">image</span>
-          <p className="font-bold text-black">Upload poster</p>
-          <input
-            value={img}
-            onChange={(e) => setImg(e.target.value)}
-            className="w-full bg-white rounded-xl px-4 py-3 outline-none border border-black/10"
-            placeholder="Tempel URL gambar (dummy)"
-          />
-          <div className="self-end mt-2">
-            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-xl bg-[#EEF0E3] text-sm font-bold">
-              <span className="material-icons text-[18px]">check_box</span> ok
-            </span>
-          </div>
-        </div>
+    <Modal open={open} onClose={onClose} title={mode === "create" ? "Buat acara" : "Edit acara"} widthClass="max-w-[860px]">
+      <div className="max-h-[78vh] overflow-y-auto pr-1">
+        <form onSubmit={submit} className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Left upload box */}
+          <div className="bg-[#F6F6F8] rounded-2xl px-4 pt-4 pb-3 flex flex-col gap-2 border border-black/10 self-start">
+            <div className="w-full aspect-[4/3] max-h-[190px] rounded-xl bg-white border border-black/10 flex items-center justify-center overflow-hidden">
+              {posterPreview ? (
+                <img src={posterPreview} alt="Poster preview" className="w-full h-full object-cover" />
+              ) : (
+                <div className="flex flex-col items-center gap-1 text-black/60">
+                  <span className="material-icons text-[44px]">image</span>
+                  <p className="font-semibold text-[12px]">Upload poster</p>
+                </div>
+              )}
+            </div>
 
-        {/* Right form */}
-        <div className="space-y-3">
-          <Field label="Nama acara" value={title} onChange={setTitle} />
-          <Field label="Hari dan tanggal" value={date} onChange={setDate} />
-          <Field label="Waktu" value={time} onChange={setTime} />
-          <Field label="Lokasi" value={organizer} onChange={setOrganizer} />
-          <Field label="Kuota Peserta" value={quota} onChange={setQuota} type="number" />
-          <Field label="Harga tiket" value={price} onChange={setPrice} type="number" />
+            <label className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-white border border-black/10 shadow-sm cursor-pointer hover:bg-black/5 text-xs font-semibold">
+              <span className="material-icons text-[16px]">upload</span>
+              Pilih file poster
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (!f) return;
+                  if (!f.type.startsWith("image/")) return;
 
-          <div className="pt-2 flex items-center justify-end gap-3">
-            <button type="button" onClick={onClose} className="px-6 py-3 rounded-2xl bg-black/5 font-bold">
-              Batal
-            </button>
-            <button type="submit" className="px-6 py-3 rounded-2xl bg-[#F6B14A] font-extrabold hover:bg-[#f0a63e]">
-              Simpan
-            </button>
+                  if (posterPreview?.startsWith("blob:")) URL.revokeObjectURL(posterPreview);
+
+                  setPosterFile(f);
+                  setPosterPreview(URL.createObjectURL(f));
+                }}
+              />
+            </label>
+
+            <div className="flex items-center justify-between text-[11px] leading-none mt-1">
+              <p className="text-black/60">PNG/JPG, maks 5MB</p>
+              <span
+                className={`inline-flex items-center gap-1 px-2 py-[2px] rounded-md font-bold ${
+                  posterFile ? "bg-[#EEF0E3] text-black" : "bg-black/5 text-black/50"
+                }`}
+              >
+                <span className="material-icons text-[13px]">{posterFile ? "check_box" : "check_box_outline_blank"}</span>
+                {posterFile ? "ok" : "belum"}
+              </span>
+            </div>
           </div>
-        </div>
-      </form>
+
+          {/* Right form */}
+          <div className="space-y-2">
+            <Field label="Nama acara" value={namaEvent} onChange={setNamaEvent} />
+            <Field label="Penyelenggara" value={penyelenggara} onChange={setPenyelenggara} />
+            <TextAreaField label="Deskripsi acara" value={deskripsi} onChange={setDeskripsi} />
+            <Field label="Tanggal acara" value={tanggal} onChange={setTanggal} type="date" />
+            <Field label="Waktu acara" value={waktu} onChange={setWaktu} type="time" />
+            <Field label="Lokasi acara" value={lokasi} onChange={setLokasi} />
+            <Field label="Kapasitas peserta" value={kapasitas} onChange={setKapasitas} type="number" />
+            <Field label="Harga tiket" value={hargaTiket} onChange={setHargaTiket} type="number" />
+
+            <div className="pt-1 flex items-center justify-end gap-2">
+              <button type="button" onClick={onClose} className="px-5 py-2.5 rounded-2xl bg-black/5 font-bold text-sm">
+                Batal
+              </button>
+              <button type="submit" className="px-5 py-2.5 rounded-2xl bg-[#F6B14A] font-extrabold hover:bg-[#f0a63e] text-sm">
+                Simpan
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
     </Modal>
   );
 }
@@ -316,12 +361,27 @@ function EventFormModal({ open, mode, initial, onClose, onSave }) {
 function Field({ label, value, onChange, type = "text" }) {
   return (
     <div>
-      <p className="text-sm font-bold text-black mb-1">{label}</p>
+      <p className="text-[13px] font-bold text-black mb-1">{label}</p>
       <input
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full bg-white rounded-xl px-4 py-3 outline-none border border-black/10 shadow-sm"
+        className="w-full bg-white rounded-xl px-4 py-2.5 outline-none border border-black/10 shadow-sm text-sm"
+      />
+    </div>
+  );
+}
+
+function TextAreaField({ label, value, onChange }) {
+  return (
+    <div>
+      <p className="text-[13px] font-bold text-black mb-1">{label}</p>
+      <textarea
+        rows={3}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full bg-white rounded-xl px-4 py-2.5 outline-none border border-black/10 shadow-sm resize-none text-sm"
+        placeholder="Tulis deskripsi acara..."
       />
     </div>
   );

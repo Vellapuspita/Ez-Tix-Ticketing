@@ -6,32 +6,52 @@ export default function AdminStatsDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const ev = useMemo(() => dummyEvents.find((e) => e.id === id) || dummyEvents[0], [id]);
+  // ✅ Samakan field dengan halaman user/admin dashboard:
+  // { id, namaEvent, tanggal, waktu, lokasi, kapasitas, hargaTiket, deskripsi, penyelenggara, gambar, terjual? }
+  const ev = useMemo(() => {
+    const found = dummyEvents.find((e) => e.id === id);
+    return found || dummyEvents[0];
+  }, [id]);
 
-  const revenue = ev.sold * ev.price;
-  const percent = Math.min(100, Math.round((ev.sold / ev.quota) * 100));
-  const remaining = Math.max(0, ev.quota - ev.sold);
+  // kalau backend belum punya terjual/pengunjung, amanin default
+  const sold = Number(ev.terjual ?? 0);
+  const capacity = Number(ev.kapasitas ?? 0);
+  const price = Number(ev.hargaTiket ?? 0);
+
+  const revenue = sold * price;
+  const percent = capacity > 0 ? Math.min(100, Math.round((sold / capacity) * 100)) : 0;
+  const remaining = Math.max(0, capacity - sold);
+
+  // opsional: kalau kamu belum punya field ini di dummy
+  const visitors = Number(ev.pengunjung ?? ev.visitors ?? 0);
 
   return (
     <div className="w-full">
-      {/* Header card event (mirip figma) */}
+      {/* Header card event */}
       <div className="bg-white rounded-[22px] sm:rounded-[28px] shadow-sm p-5 sm:p-6">
         <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
-          <img src={ev.image} alt={ev.title} className="w-full lg:w-[140px] h-[100px] rounded-xl object-cover" />
+          <img
+            src={ev.gambar}
+            alt={ev.namaEvent}
+            className="w-full lg:w-[140px] h-[100px] rounded-xl object-cover"
+          />
 
           <div className="flex-1">
-            <p className="font-extrabold text-black text-lg">{ev.title}</p>
-            <p className="text-sm text-black/70">{ev.organizer}</p>
-            <p className="text-sm text-green-700 font-extrabold mt-1">{rupiah(ev.price)}</p>
+            <p className="font-extrabold text-black text-lg">{ev.namaEvent}</p>
+
+            <p className="text-sm text-black/70">{ev.penyelenggara || "-"}</p>
+            <p className="text-sm text-black/70">{ev.lokasi || "-"}</p>
+
+            <p className="text-sm text-green-700 font-extrabold mt-1">{rupiah(ev.hargaTiket || 0)}</p>
 
             <div className="mt-2 text-sm text-black/70 space-y-1">
               <div className="flex items-center gap-2">
                 <span className="material-icons text-[16px]">event</span>
-                <span>{ev.date}</span>
+                <span>{ev.tanggal || "-"}</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="material-icons text-[16px]">schedule</span>
-                <span>{ev.time}</span>
+                <span>{ev.waktu || "-"}</span>
               </div>
             </div>
           </div>
@@ -48,12 +68,12 @@ export default function AdminStatsDetailPage() {
         <div className="mt-5 grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="bg-white border border-black/10 rounded-2xl p-5 shadow-sm">
             <p className="text-sm font-bold text-black">Pesanan</p>
-            <p className="text-2xl font-extrabold text-black">{ev.sold}</p>
+            <p className="text-2xl font-extrabold text-black">{sold}</p>
             <p className="text-xs text-black/60">Meningkat 10% dari kemarin</p>
 
             <div className="mt-4">
               <p className="text-sm font-bold text-black">Total pengunjung</p>
-              <p className="text-2xl font-extrabold text-black">{ev.visitors}</p>
+              <p className="text-2xl font-extrabold text-black">{visitors}</p>
               <p className="text-xs text-black/60">Meningkat 23,53% dari kemarin</p>
             </div>
           </div>
@@ -64,14 +84,14 @@ export default function AdminStatsDetailPage() {
           </div>
 
           <div className="bg-white border border-black/10 rounded-2xl p-5 shadow-sm flex items-center justify-center">
-            <Gauge percent={percent} label="Tiket terjual" value={ev.sold} />
+            <Gauge percent={percent} label="Tiket terjual" value={sold} />
           </div>
         </div>
 
         {/* Chart */}
         <div className="mt-5 bg-white border border-black/10 rounded-2xl p-5 shadow-sm">
           <p className="text-center font-extrabold text-black">Grafik Penjualan Tiket</p>
-          <SimpleLine sold={ev.sold} remaining={remaining} />
+          <SimpleLine sold={sold} remaining={remaining} />
         </div>
       </div>
     </div>
@@ -108,7 +128,6 @@ function Gauge({ percent, label, value }) {
 }
 
 function SimpleLine({ sold, remaining }) {
-  // simple “line chart” look using SVG
   const max = Math.max(sold, remaining, 1);
   const p1y = 20 + (1 - sold / max) * 80;
   const p2y = 20 + (1 - remaining / max) * 80;
@@ -116,24 +135,16 @@ function SimpleLine({ sold, remaining }) {
   return (
     <div className="mt-3">
       <svg className="w-full" height="220" viewBox="0 0 520 220">
-        {/* grid */}
         {[0, 1, 2, 3, 4].map((i) => (
           <line key={i} x1="60" y1={20 + i * 40} x2="500" y2={20 + i * 40} stroke="rgba(0,0,0,0.08)" />
         ))}
         <line x1="60" y1="180" x2="500" y2="180" stroke="rgba(0,0,0,0.25)" />
         <line x1="60" y1="20" x2="60" y2="180" stroke="rgba(0,0,0,0.25)" />
 
-        {/* line */}
-        <polyline
-          points={`80,${p1y} 480,${p2y}`}
-          fill="none"
-          stroke="blue"
-          strokeWidth="2"
-        />
+        <polyline points={`80,${p1y} 480,${p2y}`} fill="none" stroke="blue" strokeWidth="2" />
         <circle cx="80" cy={p1y} r="4" />
         <circle cx="480" cy={p2y} r="4" />
 
-        {/* labels */}
         <text x="80" y="205" textAnchor="middle" fontSize="12">
           Tiket Terjual
         </text>

@@ -1,45 +1,57 @@
 export const dummyEvents = [
   {
     id: "ev1",
-    title: "Seminar Nasional Blockchain",
-    organizer: "Dharma Negara Alaya Denpasar",
-    date: "27 September 2025",
-    time: "09:00 WITA",
-    price: 100000,
-    quota: 100,
-    sold: 40,
-    visitors: 50,
-    image:
-      "https://images.unsplash.com/photo-1551836022-d5d88e9218df?q=80&w=800&auto=format&fit=crop",
+    namaEvent: "Seminar Nasional Blockchain",
+    deskripsi:
+      "Seminar nasional yang membahas teknologi blockchain, Web3, dan implementasinya di sektor publik dan industri.",
+    tanggal: "2025-09-27",
+    waktu: "09:00 WITA",
+    lokasi: "Dharma Negara Alaya, Denpasar",
+    penyelenggara: "Dharma Negara Alaya Denpasar",
+    hargaTiket: 100000,
+    kapasitas: 100,
+    terjual: 40,
+    pengunjung: 50,
+    gambar:
+      "https://images.unsplash.com/photo-1551836022-d5d88e9218df?q=80&w=1200&auto=format&fit=crop",
   },
   {
     id: "ev2",
-    title: "Ruang NADA",
-    organizer: "Lapangan Niti Mandala Renon",
-    date: "19 Oktober 2025",
-    time: "19:00 WIB",
-    price: 150000,
-    quota: 200,
-    sold: 100,
-    visitors: 120,
-    image:
-      "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?q=80&w=800&auto=format&fit=crop",
+    namaEvent: "Ruang NADA",
+    deskripsi:
+      "Konser musik malam hari dengan konsep festival terbuka dan penampilan musisi lokal serta nasional.",
+    tanggal: "2025-10-19",
+    waktu: "19:00 WITA",
+    lokasi: "Lapangan Niti Mandala Renon",
+    penyelenggara: "Ruang Nada Production",
+    hargaTiket: 150000,
+    kapasitas: 200,
+    terjual: 100,
+    pengunjung: 120,
+    gambar:
+      "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?q=80&w=1200&auto=format&fit=crop",
   },
   {
     id: "ev3",
-    title: "Stand-up Comedy",
-    organizer: "Istana Taman Jepun, Denpasar",
-    date: "12 Oktober 2025",
-    time: "17:00 WITA",
-    price: 50000,
-    quota: 150,
-    sold: 20,
-    visitors: 25,
-    image:
-       "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?q=80&w=800&auto=format&fit=crop",
+    namaEvent: "Stand-up Comedy",
+    deskripsi:
+      "Pertunjukan stand-up comedy dengan komika nasional dan lokal Bali.",
+    tanggal: "2025-10-12",
+    waktu: "17:00 WITA",
+    lokasi: "Istana Taman Jepun, Denpasar",
+    penyelenggara: "Comedy ID Bali",
+    hargaTiket: 50000,
+    kapasitas: 150,
+    terjual: 20,
+    pengunjung: 25,
+    gambar:
+      "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?q=80&w=1200&auto=format&fit=crop",
   },
 ];
 
+// =======================
+// USERS
+// =======================
 export const dummyUsers = [
   { id: "u1", name: "Dacosta Wilson", email: "dacostawilson@gmail.com", role: "Customer" },
   { id: "u2", name: "Vella Puspita", email: "vellapuspita@gmail.com", role: "Customer" },
@@ -47,6 +59,9 @@ export const dummyUsers = [
   { id: "u4", name: "Florentina DTR", email: "florentinadtrn@gmail.com", role: "Customer" },
 ];
 
+// =======================
+// CHECKINS
+// =======================
 export const dummyCheckins = [
   { code: "12335646443", email: "dacostawilson@gmail.com", qty: 1, status: "Check-in Berhasil" },
   { code: "0565893342", email: "vellapuspita@gmail.com", qty: 2, status: "Check-in Berhasil" },
@@ -54,8 +69,15 @@ export const dummyCheckins = [
   { code: "2234539437", email: "florentinadtrn@gmail.com", qty: 2, status: "Check-in Berhasil" },
 ];
 
-export const rupiah = (n) =>
-  new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(n);
+// =======================
+// HELPERS
+// =======================
+export const rupiah = (n = 0) =>
+  new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+  }).format(n);
 
-export const totalRevenue = (events) =>
-  events.reduce((acc, e) => acc + e.sold * e.price, 0);
+export const totalRevenue = (events = []) =>
+  events.reduce((acc, e) => acc + (e.hargaTiket || 0) * (e.terjual || 0), 0);
