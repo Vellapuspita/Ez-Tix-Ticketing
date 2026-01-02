@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import axios from "axios";
+import api from "../../utils/api";
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
@@ -26,31 +26,36 @@ export default function AdminLoginPage() {
     try {
       setIsLoading(true);
 
-      // 1. Integrasi API Login menggunakan endpoint dari authController
-      const response = await axios.post("http://localhost:4000/api/auth/login", {
-        email: email,
-        password: password,
+      // ✅ Integrasi API Login menggunakan axios instance (baseURL dari env)
+      const response = await api.post("/auth/login", {
+        email,
+        password,
       });
 
       const { token, user } = response.data;
 
-      // 2. Validasi Role: Memastikan user yang login memiliki role 'admin'
-      if (user.role !== "admin") {
+      // ✅ Validasi Role: pastikan admin
+      if (user?.role !== "admin") {
+        // bersihin kalau bukan admin (biar token gak nyangkut)
+        localStorage.removeItem("adminToken");
+        localStorage.removeItem("adminName");
+        localStorage.removeItem("adminRole");
+
         setError("Akses ditolak. Akun ini bukan merupakan akun Admin.");
         return;
       }
 
-      // 3. Simpan data autentikasi ke localStorage agar bisa digunakan oleh admin dashboard
-      localStorage.setItem("token", token);
+      // ✅ Simpan token khusus ADMIN (biar tidak bentrok dengan user)
+      localStorage.setItem("adminToken", token);
       localStorage.setItem("adminName", user.namaPengguna);
-      localStorage.setItem("role", user.role);
+      localStorage.setItem("adminRole", user.role);
 
-      // 4. Navigasi ke halaman utama admin
+      // ✅ Navigasi ke halaman utama admin
       navigate("/admin", { replace: true });
-
     } catch (err) {
       // Menampilkan pesan error spesifik dari backend (misal: "Password salah")
-      const message = err.response?.data?.message || "Terjadi kesalahan saat login admin.";
+      const message =
+        err?.response?.data?.message || "Terjadi kesalahan saat login admin.";
       setError(message);
     } finally {
       setIsLoading(false);
@@ -74,7 +79,6 @@ export default function AdminLoginPage() {
       <div className="relative min-h-screen flex items-center justify-center px-4 py-10">
         <div className="w-full max-w-[980px] rounded-[22px] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.35)]">
           <div className="grid grid-cols-1 md:grid-cols-2">
-            
             {/* LEFT SIDE: Login Form */}
             <div className="bg-white px-8 sm:px-12 py-10 sm:py-12">
               <div className="text-center">
@@ -98,7 +102,11 @@ export default function AdminLoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className={`w-full h-[44px] rounded-xl px-4 text-sm outline-none border shadow-sm transition-all
-                      ${error ? "border-red-500 ring-1 ring-red-500" : "border-black/15 focus:border-[#F28B3C]"}
+                      ${
+                        error
+                          ? "border-red-500 ring-1 ring-red-500"
+                          : "border-black/15 focus:border-[#F28B3C]"
+                      }
                     `}
                     required
                   />
@@ -116,7 +124,11 @@ export default function AdminLoginPage() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className={`w-full h-[44px] rounded-xl px-4 pr-11 text-sm outline-none border shadow-sm transition-all
-                        ${error ? "border-red-500 ring-1 ring-red-500" : "border-black/15 focus:border-[#F28B3C]"}
+                        ${
+                          error
+                            ? "border-red-500 ring-1 ring-red-500"
+                            : "border-black/15 focus:border-[#F28B3C]"
+                        }
                       `}
                       required
                     />
@@ -124,6 +136,7 @@ export default function AdminLoginPage() {
                       type="button"
                       onClick={() => setShowPassword((s) => !s)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-black/50 hover:text-black"
+                      aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
                     >
                       {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
@@ -133,7 +146,9 @@ export default function AdminLoginPage() {
                 {/* Error Alert */}
                 {error && (
                   <div className="bg-red-50 border-l-4 border-red-500 p-3 mt-2">
-                    <p className="text-[11px] text-red-600 font-medium">{error}</p>
+                    <p className="text-[11px] text-red-600 font-medium">
+                      {error}
+                    </p>
                   </div>
                 )}
 
@@ -148,17 +163,20 @@ export default function AdminLoginPage() {
 
                 {/* Optional Links */}
                 <div className="space-y-3 pt-2">
-                    <p className="text-xs text-black/60 text-center">
+                  <p className="text-xs text-black/60 text-center">
                     Belum punya akun admin?{" "}
-                    <Link to="/register" className="text-[#F28B3C] font-semibold hover:underline">
-                        Daftar Admin
+                    <Link
+                      to="/register"
+                      className="text-[#F28B3C] font-semibold hover:underline"
+                    >
+                      Daftar Admin
                     </Link>
-                    </p>
-                    <p className="text-[11px] text-black/40 text-center">
+                  </p>
+                  <p className="text-[11px] text-black/40 text-center">
                     <Link to="/login" className="hover:underline">
-                        Kembali ke login customer
+                      Kembali ke login customer
                     </Link>
-                    </p>
+                  </p>
                 </div>
               </form>
             </div>
@@ -173,7 +191,6 @@ export default function AdminLoginPage() {
                 />
               </div>
             </div>
-
           </div>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ConfirmDialog } from "../admin/AdminUI"; // ✅ sesuaikan path kalau beda
 
 const menu = [
@@ -18,8 +18,17 @@ export default function AdminLayout() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const adminName = "Arya Genta";
-  const adminRole = "Admin";
+  // ✅ ADMIN INFO (dari localStorage)
+  const [adminName, setAdminName] = useState("Admin");
+  const [adminRole, setAdminRole] = useState("Admin");
+
+  useEffect(() => {
+    const name = localStorage.getItem("adminName");
+    const role = localStorage.getItem("adminRole");
+
+    if (name) setAdminName(name);
+    if (role) setAdminRole(role);
+  }, []);
 
   const isActive = (path) =>
     location.pathname === path || location.pathname.startsWith(path + "/");
@@ -31,13 +40,20 @@ export default function AdminLayout() {
 
   // ✅ kalau user klik "Iya"
   const confirmLogout = () => {
-    // hapus token kalau ada
-    localStorage.removeItem("token");
+    // 🔐 hapus data ADMIN
     localStorage.removeItem("adminToken");
+    localStorage.removeItem("adminName");
+    localStorage.removeItem("adminRole");
+
+    // reset state biar UI langsung bersih
+    setAdminName("Admin");
+    setAdminRole("Admin");
 
     setOpenLogout(false);
-    setOpen(false); // tutup drawer kalau sedang di mobile
-    navigate("/"); // bisa ganti ke "/login" kalau mau
+    setOpen(false); // tutup drawer mobile
+
+    // 🔁 balik ke halaman LOGIN ADMIN
+    navigate("/admin/login", { replace: true });
   };
 
   const SidebarContent = () => (
@@ -48,7 +64,9 @@ export default function AdminLayout() {
           <div className="w-9 h-9 rounded-full bg-black flex items-center justify-center">
             <span className="material-icons text-white text-[18px]">speed</span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-black">Dashboard</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-black">
+            Dashboard
+          </h1>
         </div>
 
         {/* close btn on mobile */}
@@ -93,7 +111,9 @@ export default function AdminLayout() {
           </div>
           <div>
             <p className="font-bold text-black leading-tight">{adminName}</p>
-            <p className="text-sm text-black/80">{adminRole}</p>
+            <p className="text-sm text-black/80">
+              {adminRole === "admin" ? "Admin" : adminRole}
+            </p>
           </div>
         </div>
 
@@ -122,7 +142,9 @@ export default function AdminLayout() {
 
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center">
-              <span className="material-icons text-white text-[16px]">speed</span>
+              <span className="material-icons text-white text-[16px]">
+                speed
+              </span>
             </div>
             <span className="font-bold text-black">Admin</span>
           </div>
@@ -156,7 +178,7 @@ export default function AdminLayout() {
         </main>
       </div>
 
-      {/* ✅ POPUP LOGOUT (sesuai figma: "Anda mau keluar?") */}
+      {/* ✅ POPUP LOGOUT */}
       <ConfirmDialog
         open={openLogout}
         title="Keluar"
