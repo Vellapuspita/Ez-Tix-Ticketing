@@ -33,44 +33,43 @@ export default function CheckoutPage() {
   // A. FETCH EVENT DETAIL & PRE-FILL USER DATA
   // ===============================================================
   const fetchData = async () => {
-    try {
-      setLoading(true);
-      
-      // 1. Pre-fill data user dari localStorage (Login)
-      const storedUserName = localStorage.getItem('userName');
-      const token = localStorage.getItem('token');
-      
-      if (!token) {
-        // Jika belum login, redirect ke login
-        navigate('/login');
-        return;
-      }
+  try {
+    setLoading(true);
 
-      // Kita harus mengambil email dari /profile karena email tidak tersimpan di localStorage
-      // Ini adalah panggilan API terproteksi, kita gunakan endpoint Get Profile
-      const profileResponse = await axios.get('http://localhost:4000/api/auth/profile', {
-          headers: {
-              'Authorization': `Bearer ${token}`
-          }
-      });
-      const userEmail = profileResponse.data.user.email;
-      
-      // Set state form dengan data user
-      setName(storedUserName || '');
-      setEmail(userEmail || '');
-      
-      // 2. Fetch Detail Event
-      const eventResponse = await axios.get(`${EVENT_BASE_URL}/${eventId}`);
-      setEventData(eventResponse.data.event);
+    const token = localStorage.getItem("token");
 
-    } catch (err) {
-      console.error("Error fetching data:", err);
-      setError("Gagal memuat detail event atau data profil.");
-      setEventData(null);
-    } finally {
-      setLoading(false);
+    if (!token) {
+      navigate("/login");
+      return;
     }
-  };
+
+    // === 1. Ambil data profil user ===
+    const profileResponse = await axios.get(
+      "http://localhost:4000/api/auth/profile",
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const userData = profileResponse.data.user;
+
+    setName(userData.namaPengguna || "");
+    setEmail(userData.email || "");
+
+    // === 2. Ambil data event ===
+    const eventResponse = await axios.get(`${EVENT_BASE_URL}/${eventId}`);
+    setEventData(eventResponse.data.event);
+  } catch (err) {
+    console.error("Error fetching data:", err);
+    setError("Gagal memuat detail event atau data profil.");
+    setEventData(null);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   useEffect(() => {
     if (eventId) {
