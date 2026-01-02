@@ -6,35 +6,37 @@ export default function AdminStatsDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  // ✅ Samakan field dengan halaman user/admin dashboard:
-  // { id, namaEvent, tanggal, waktu, lokasi, kapasitas, hargaTiket, deskripsi, penyelenggara, gambar, terjual? }
+  // ✅ Aman untuk dummy (id) + backend (_id)
   const ev = useMemo(() => {
-    const found = dummyEvents.find((e) => e.id === id);
+    const found = dummyEvents.find((e) => String(e.id) === String(id) || String(e._id) === String(id));
     return found || dummyEvents[0];
   }, [id]);
 
-  // kalau backend belum punya terjual/pengunjung, amanin default
+  const eventId = ev._id || ev.id;
+
+  // ✅ field konsisten dengan dummy terbaru
   const sold = Number(ev.terjual ?? 0);
   const capacity = Number(ev.kapasitas ?? 0);
   const price = Number(ev.hargaTiket ?? 0);
+  const visitors = Number(ev.pengunjung ?? 0);
 
   const revenue = sold * price;
   const percent = capacity > 0 ? Math.min(100, Math.round((sold / capacity) * 100)) : 0;
   const remaining = Math.max(0, capacity - sold);
-
-  // opsional: kalau kamu belum punya field ini di dummy
-  const visitors = Number(ev.pengunjung ?? ev.visitors ?? 0);
 
   return (
     <div className="w-full">
       {/* Header card event */}
       <div className="bg-white rounded-[22px] sm:rounded-[28px] shadow-sm p-5 sm:p-6">
         <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
-          <img
-            src={ev.gambar}
-            alt={ev.namaEvent}
-            className="w-full lg:w-[140px] h-[100px] rounded-xl object-cover"
-          />
+          {/* Biar image selalu presisi */}
+          <div className="w-full lg:w-[140px] h-[100px] rounded-xl overflow-hidden bg-white shrink-0">
+            <img
+              src={ev.gambar}
+              alt={ev.namaEvent}
+              className="w-full h-full object-cover"
+            />
+          </div>
 
           <div className="flex-1">
             <p className="font-extrabold text-black text-lg">{ev.namaEvent}</p>
@@ -42,7 +44,9 @@ export default function AdminStatsDetailPage() {
             <p className="text-sm text-black/70">{ev.penyelenggara || "-"}</p>
             <p className="text-sm text-black/70">{ev.lokasi || "-"}</p>
 
-            <p className="text-sm text-green-700 font-extrabold mt-1">{rupiah(ev.hargaTiket || 0)}</p>
+            <p className="text-sm text-green-700 font-extrabold mt-1">
+              {rupiah(price)}
+            </p>
 
             <div className="mt-2 text-sm text-black/70 space-y-1">
               <div className="flex items-center gap-2">
@@ -57,7 +61,7 @@ export default function AdminStatsDetailPage() {
           </div>
 
           <button
-            onClick={() => navigate(`/admin/stats/${ev.id}/checkin`)}
+            onClick={() => navigate(`/admin/stats/${eventId}/checkin`)}
             className="px-6 py-2 rounded-xl bg-[#F6B14A] text-black font-extrabold hover:bg-[#f0a63e]"
           >
             Hasil Check-in
@@ -99,7 +103,6 @@ export default function AdminStatsDetailPage() {
 }
 
 function Gauge({ percent, label, value }) {
-  // semicircle gauge via SVG
   const r = 60;
   const c = 2 * Math.PI * r;
   const half = c / 2;

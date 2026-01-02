@@ -43,7 +43,8 @@ export default function AdminDashboard() {
   const totalCustomer = 20; // dummy
   const totalTicket = events.reduce((acc, e) => acc + Number(e.kapasitas || 0), 0);
 
-  const revenue = totalRevenue(events.map((e) => ({ ...e, price: e.hargaTiket })));
+  const revenue = totalRevenue(events);
+
 
   const openCreate = () => {
     setFormMode("create");
@@ -149,84 +150,94 @@ export default function AdminDashboard() {
         ) : (
           <div className="space-y-4">
             {paged.map((ev) => (
-              <div key={ev.id} className="bg-[#EEF0E3] rounded-2xl p-4 flex flex-col lg:flex-row gap-4 lg:items-center">
+  <div
+    key={ev.id}
+    className="bg-[#EEF0E3] rounded-2xl p-4 flex flex-col lg:flex-row gap-4 lg:items-center"
+  >
+    {/* IMAGE FIX */}
+    <div className="w-full lg:w-[150px] h-[110px] rounded-xl overflow-hidden bg-white shrink-0">
+      <img
+        src={ev.gambar}
+        alt={ev.namaEvent}
+        className="w-full h-full object-cover"
+      />
+    </div>
 
-                <div className="w-full lg:w-[150px] h-[110px] rounded-xl overflow-hidden bg-white shrink-0">
-  <img
-    src={ev.gambar}
-    alt={ev.namaEvent}
-    className="w-full h-full object-cover"
-  />
-</div>
+    <div className="flex-1">
+      <p className="font-extrabold text-black">{ev.namaEvent}</p>
 
+      <div className="mt-1 text-sm text-black/70 space-y-1">
+        <div className="flex items-center gap-2">
+          <span className="material-icons text-[16px]">location_on</span>
+          <span>{ev.lokasi}</span>
+        </div>
 
-                <div className="flex-1">
-                  <p className="font-extrabold text-black">{ev.namaEvent}</p>
+        <div className="flex items-center gap-2">
+          <span className="material-icons text-[16px]">person</span>
+          <span>{ev.penyelenggara || "-"}</span>
+        </div>
 
-                  <div className="mt-1 text-sm text-black/70 space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="material-icons text-[16px]">location_on</span>
-                      <span>{ev.lokasi}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="material-icons text-[16px]">person</span>
-                      <span>{ev.penyelenggara || "-"}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="material-icons text-[16px]">event</span>
-                      <span>{ev.tanggal}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="material-icons text-[16px]">confirmation_number</span>
-                      <span>{ev.kapasitas} Tiket Tersedia</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="material-icons text-[16px]">schedule</span>
-                      <span>{ev.waktu}</span>
-                    </div>
-                  </div>
+        <div className="flex items-center gap-2">
+          <span className="material-icons text-[16px]">event</span>
+          <span>{ev.tanggal}</span>
+        </div>
 
-                  <p className="mt-2 text-green-700 font-extrabold text-sm">{rupiah(ev.hargaTiket)}</p>
-                </div>
+        <div className="flex items-center gap-2">
+          <span className="material-icons text-[16px]">confirmation_number</span>
+          <span>{ev.kapasitas} Tiket Tersedia</span>
+        </div>
 
-                {/* Right actions + QR mock */}
-                <div className="flex items-center justify-between lg:flex-col lg:items-end gap-3">
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => openEdit(ev)}
-                      className="px-3 py-2 rounded-xl bg-blue-600 text-white font-bold text-sm hover:bg-blue-700 flex items-center gap-1"
-                    >
-                      <span className="material-icons text-[18px]">edit</span> Edit
-                    </button>
+        <div className="flex items-center gap-2">
+          <span className="material-icons text-[16px]">schedule</span>
+          <span>{ev.waktu}</span>
+        </div>
+      </div>
 
-                    <button
-                      onClick={() => askDelete(ev)}
-                      className="px-3 py-2 rounded-xl bg-red-500 text-white font-bold text-sm hover:bg-red-600 flex items-center gap-1"
-                    >
-                      <span className="material-icons text-[18px]">delete</span> Hapus acara
-                    </button>
-                  </div>
+      <p className="mt-2 text-green-700 font-extrabold text-sm">
+        {rupiah(ev.hargaTiket)}
+      </p>
+    </div>
 
-                  <div className="w-[90px] h-[90px] bg-white rounded-xl flex items-center justify-center">
-  <div className="w-[70px] h-[70px] rounded-lg overflow-hidden">
-    <QRCodeCanvas
-      value={`${window.location.origin}/events/${ev.id}`}
-      size={70}
-      includeMargin
-    />
+    {/* RIGHT ACTIONS */}
+    <div className="flex items-center justify-between lg:flex-col lg:items-end gap-3">
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => openEdit(ev)}
+          className="px-3 py-2 rounded-xl bg-blue-600 text-white font-bold text-sm hover:bg-blue-700 flex items-center gap-1"
+        >
+          <span className="material-icons text-[18px]">edit</span> Edit
+        </button>
+
+        <button
+          onClick={() => askDelete(ev)}
+          className="px-3 py-2 rounded-xl bg-red-500 text-white font-bold text-sm hover:bg-red-600 flex items-center gap-1"
+        >
+          <span className="material-icons text-[18px]">delete</span> Hapus acara
+        </button>
+      </div>
+
+      {/* QR FIX */}
+      <div className="w-[90px] h-[90px] bg-white rounded-xl flex items-center justify-center shrink-0">
+        <div className="w-[74px] h-[74px] rounded-lg overflow-hidden bg-white grid place-items-center border border-black/10">
+          <QRCodeCanvas
+            value={`${window.location.origin}/events/${ev._id || ev.id}`}
+            size={64}
+            includeMargin={false}
+            style={{ display: "block" }}
+          />
+        </div>
+      </div>
+
+      <button
+        onClick={() => navigate(`/admin/stats/${ev.id}`)}
+        className="px-5 py-2 rounded-xl bg-[#F6B14A] text-black font-extrabold hover:bg-[#f0a63e]"
+      >
+        Cek detail
+      </button>
+    </div>
   </div>
-</div>
+))}
 
-
-                  <button
-                    onClick={() => navigate(`/admin/stats/${ev.id}`)}
-                    className="px-5 py-2 rounded-xl bg-[#F6B14A] text-black font-extrabold hover:bg-[#f0a63e]"
-                  >
-                    Cek detail
-                  </button>
-                </div>
-              </div>
-            ))}
           </div>
         )}
       </div>
