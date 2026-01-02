@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { dummyEvents, rupiah, totalRevenue } from "../../data/adminDummy";
 import { ConfirmDialog, Modal, Pagination, Toast } from "../../components/admin/AdminUI";
 import { useNavigate } from "react-router-dom";
+import { QRCodeCanvas } from "qrcode.react";
+
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -198,10 +200,15 @@ export default function AdminDashboard() {
                   </div>
 
                   <div className="w-[90px] h-[90px] bg-white rounded-xl flex items-center justify-center">
-                    <div className="w-[70px] h-[70px] border-2 border-black/20 rounded-lg grid place-items-center text-xs font-bold">
-                      QR
-                    </div>
-                  </div>
+  <div className="w-[70px] h-[70px] rounded-lg overflow-hidden">
+    <QRCodeCanvas
+      value={`${window.location.origin}/events/${ev.id}`}
+      size={70}
+      includeMargin
+    />
+  </div>
+</div>
+
 
                   <button
                     onClick={() => navigate(`/admin/stats/${ev.id}`)}
