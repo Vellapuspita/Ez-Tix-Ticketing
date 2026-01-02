@@ -149,8 +149,16 @@ export default function AdminDashboard() {
         ) : (
           <div className="space-y-4">
             {paged.map((ev) => (
-              <div key={ev.id} className="bg-[#EEF0E3] rounded-2xl p-4 flex flex-col lg:flex-row gap-4">
-                <img src={ev.gambar} alt={ev.namaEvent} className="w-full lg:w-[150px] h-[110px] rounded-xl object-cover" />
+              <div key={ev.id} className="bg-[#EEF0E3] rounded-2xl p-4 flex flex-col lg:flex-row gap-4 lg:items-center">
+
+                <div className="w-full lg:w-[150px] h-[110px] rounded-xl overflow-hidden bg-white shrink-0">
+  <img
+    src={ev.gambar}
+    alt={ev.namaEvent}
+    className="w-full h-full object-cover"
+  />
+</div>
+
 
                 <div className="flex-1">
                   <p className="font-extrabold text-black">{ev.namaEvent}</p>
