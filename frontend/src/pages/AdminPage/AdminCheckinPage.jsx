@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import authAxios from "../../utils/authAxios"; 
+import adminAxios from "../../utils/api"; 
 import { Pagination } from "../../components/admin/AdminUI";
 
 export default function AdminCheckinPage() {
@@ -19,7 +19,7 @@ export default function AdminCheckinPage() {
       try {
         setLoading(true);
         // Mengirim query params page, limit, dan search sesuai controller
-        const response = await authAxios.get(`/checkin/event/${id}`, {
+        const response = await adminAxios.get(`/checkin/event/${id}`, {
           params: {
             page: page,
             limit: pageSize,
