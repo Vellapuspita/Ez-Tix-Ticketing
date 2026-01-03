@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import adminAxios from "../../utils/api"; 
 import { Pagination } from "../../components/admin/AdminUI";

@@ -22,42 +22,38 @@ export default function RegisterPage() {
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleRegister = async (e) => {
-    e.preventDefault();
-    setError("");
+const handleRegister = async (e) => {
+  e.preventDefault();
+  setError("");
 
-    if (form.password !== form.confirmPassword) {
-      setError("Kata sandi tidak cocok!");
-      return;
-    }
+  if (form.password !== form.confirmPassword) {
+    setError("Kata sandi tidak cocok!");
+    return;
+  }
 
-    try {
-      setIsLoading(true);
+  try {
+    setIsLoading(true);
 
-      const response = await axios.post(
-        "http://localhost:4000/api/auth/register",
-        {
-          name: form.name,
-          email: form.email,
-          password: form.password,
-        }
-      );
-
-      const token = response.data.token;
-      if (token) {
-        localStorage.setItem("token", token);
-        navigate("/");
-      } else {
-        navigate("/login");
+    await axios.post(
+      "http://localhost:4000/api/auth/register",
+      {
+        name: form.name,
+        email: form.email,
+        password: form.password,
       }
-    } catch (err) {
-      const errorMessage =
-        err.response?.data?.message || "Registrasi gagal. Coba lagi.";
-      setError(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    );
+
+    navigate("/login");   // ⭐ INI WAJIB
+
+  } catch (err) {
+    const errorMessage =
+      err.response?.data?.message || "Registrasi gagal. Coba lagi.";
+    setError(errorMessage);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   return (
     <div className="flex flex-col justify-center h-full">
