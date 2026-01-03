@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import authAxios from "../utils/authAxios"; // Axios dengan token
+import authAxios from "../utils/authAxios";
 import { useNavigate } from "react-router-dom";
 
 const IMAGE_BASE_URL = "http://localhost:4000";
@@ -10,6 +10,9 @@ export default function TicketListPage() {
   const [openId, setOpenId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // --- STATE UNTUK MODAL QR ---
+  const [selectedQR, setSelectedQR] = useState(null);
 
   const toggleDetail = (id) => {
     setOpenId(openId === id ? null : id);
@@ -27,31 +30,23 @@ export default function TicketListPage() {
     const date = new Date(dateString);
     return {
         day: date.toLocaleDateString('id-ID', { day: 'numeric' }),
-        month: date.toLocaleDateString('id-ID', { month: 'long' }).substring(0, 3), // Ambil 3 huruf awal
+        month: date.toLocaleDateString('id-ID', { month: 'long' }).substring(0, 3),
         year: date.toLocaleDateString('id-ID', { year: 'numeric' }),
     };
   };
 
-  // ===============================================================
-  // FUNGSI AMBIL SEMUA TIKET USER DARI BACKEND
-  // ===============================================================
   const fetchMyTickets = async () => {
     const token = localStorage.getItem('token');
     if (!token) {
-        navigate('/login'); // Redirect jika tidak login
+        navigate('/login');
         return;
     }
 
     try {
         setLoading(true);
         setError(null);
-        
-        // Endpoint: GET /api/tickets/my-tickets (Membutuhkan Token)
         const response = await authAxios.get("/tickets/my-tickets"); 
-        
-        // Data dari backend sudah diolah di controller (misal: statusAcara)
         setTickets(response.data.tickets || []);
-        
     } catch (err) {
         console.error("Error fetching tickets:", err);
         setError("Gagal memuat daftar tiket Anda.");
@@ -68,70 +63,49 @@ export default function TicketListPage() {
     fetchMyTickets();
   }, []);
 
-  if (loading) {
-    return <div className="text-center py-20">Memuat tiket Anda...</div>;
-  }
-
-  if (error) {
-    return <div className="text-center py-20 text-red-500">{error}</div>;
-  }
+  if (loading) return <div className="text-center py-20">Memuat tiket Anda...</div>;
+  if (error) return <div className="text-center py-20 text-red-500">{error}</div>;
   
   return (
-    <div className="space-y-8">
-      <h1 className="text-3xl font-bold mb-4">Tiketku</h1>
+    <div className="space-y-8 p-4">
+      <h1 className="text-3xl font-bold mb-4 text-black">Tiketku</h1>
 
       {tickets.length === 0 && (
-        <p className="text-gray-500">Belum ada tiket yang dibeli.</p>
+        <p className="text-gray-500 text-center py-10">Belum ada tiket yang dibeli.</p>
       )}
 
       {tickets.map((t) => {
-        const event = t.event || {}; // Data event yang di-populate
+        const event = t.event || {};
         const dateParts = formatDateParts(event.tanggal);
         const imageUrl = event.gambar ? `${IMAGE_BASE_URL}${event.gambar}` : 'placeholder.jpg';
         
         return (
-          <div
-            key={t.ticketId}
-            className="bg-[#F9FBEF] rounded-2xl shadow overflow-hidden p-4 flex gap-4"
-          >
+          <div key={t.ticketId} className="bg-[#F9FBEF] rounded-2xl shadow overflow-hidden p-4 flex flex-col md:flex-row gap-4 border border-black/5">
             {/* POSTER + DATE BOX */}
-            <div className="w-36 flex flex-col gap-3">
-              {/* Poster */}
-              <div className="w-32 h-32 rounded-lg overflow-hidden bg-gray-200 shadow">
-                <img
-                  src={imageUrl}
-                  alt={event.namaEvent}
-                  className="w-full h-full object-cover"
-                />
+            <div className="w-full md:w-36 flex flex-row md:flex-col gap-3">
+              <div className="w-24 h-24 md:w-32 md:h-32 rounded-lg overflow-hidden bg-gray-200 shadow shrink-0">
+                <img src={imageUrl} alt={event.namaEvent} className="w-full h-full object-cover" />
               </div>
-
-              {/* Date */}
-              <div className="bg-[#F3F6D9] shadow-inner rounded-lg p-3 leading-tight">
+              <div className="bg-[#F3F6D9] shadow-inner rounded-lg p-3 leading-tight flex-1 text-center md:text-left">
                 <p className="text-xl font-bold">{dateParts.day}</p>
                 <p className="text-xl font-bold">{dateParts.month}</p>
                 <p className="text-xl font-bold">{dateParts.year}</p>
-
                 <p className="text-sm text-gray-700 mt-2">{event.waktu}</p>
               </div>
             </div>
 
             {/* MIDDLE CONTENT */}
-            <div className="flex-1 border-l pl-6">
-              <h2 className="text-2xl font-bold">{event.namaEvent}</h2>
+            <div className="flex-1 border-t md:border-t-0 md:border-l pt-4 md:pt-0 md:pl-6">
+              <h2 className="text-2xl font-bold text-black">{event.namaEvent}</h2>
               <p className="text-sm text-gray-700">{event.lokasi}</p>
+              <p className="text-green-600 font-bold text-lg mt-2">{formatRupiah(t.totalHarga)}</p>
 
-              <p className="text-green-600 font-bold text-lg mt-2">
-                {formatRupiah(t.totalHarga)}
-              </p>
-
-              {/* Divider */}
               <hr className="my-3 border-gray-300" />
 
-              {/* Top row: Detail + Status */}
               <div className="flex items-center justify-between">
                 <button
                   onClick={() => toggleDetail(t.ticketId)}
-                  className="flex items-center gap-1 text-sm font-semibold"
+                  className="flex items-center gap-1 text-sm font-semibold text-black"
                 >
                   Detail
                   <span className="material-icons text-base">
@@ -139,60 +113,77 @@ export default function TicketListPage() {
                   </span>
                 </button>
 
-                {/* Status badge */}
-                <span
-                  className={`
-                    px-4 py-1 text-sm font-semibold rounded-lg
-                    ${
-                      t.statusAcara === "Berlangsung"
-                        ? "bg-[#F4A623] text-black"
-                        : t.statusAcara === "Acara Mendatang"
-                        ? "bg-orange-300 text-black"
-                        : "bg-red-500 text-white"
-                    }
-                  `}
-                >
+                <span className={`px-4 py-1 text-sm font-semibold rounded-lg ${
+                      t.statusAcara === "Berlangsung" ? "bg-[#F4A623] text-black" : 
+                      t.statusAcara === "Acara Mendatang" ? "bg-orange-300 text-black" : "bg-red-500 text-white"
+                }`}>
                   {t.statusAcara}
                 </span>
               </div>
 
               {/* DETAIL CONTENT */}
               {openId === t.ticketId && (
-                <div className="mt-4 grid grid-cols-2 gap-y-1 text-sm">
-
+                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-y-1 text-sm bg-white/50 p-4 rounded-xl">
                   <span className="text-gray-500">Nama Pemesan :</span>
-                  <span className="font-medium">{t.namaPemesan}</span> {/* Ambil namaPemesan */}
+                  <span className="font-medium text-black">{t.namaPemesan}</span>
 
                   <span className="text-gray-500">Email :</span>
-                  <span className="font-medium">{t.emailPemesan}</span> {/* Ambil emailPemesan */}
+                  <span className="font-medium text-black">{t.emailPemesan}</span>
 
                   <span className="text-gray-500">ID Tiket :</span>
-                  <span className="font-medium">{t.ticketId}</span>
+                  <span className="font-medium text-black font-mono">{t.ticketId}</span>
 
+                  {/* TOMBOL QR YANG SUDAH DIPERBAIKI */}
                   <span 
-                    onClick={() => alert(`Tampilkan QR Code: ${t.qrCode}`)}
-                    className="text-[#F4A623] font-semibold cursor-pointer"
+                    onClick={() => setSelectedQR(t.qrCode)}
+                    className="text-[#F4A623] font-bold cursor-pointer hover:underline underline-offset-4 mt-2"
                   >
-                    QR Code tiket
+                    Tampilkan QR Code Tiket
                   </span>
                   <span />
 
-                  <span className="text-gray-500">Tanggal pembayaran :</span>
-                  <span className="font-medium">{t.paymentDateFormatted}</span> {/* Sudah diformat di backend */}
+                  <span className="text-gray-500 mt-2">Tanggal pembayaran :</span>
+                  <span className="font-medium text-black mt-2">{t.paymentDateFormatted}</span>
 
                   <span className="text-gray-500">Status pembayaran :</span>
-                  <span className="text-green-600 font-semibold">
-                    {t.paymentStatus}
-                  </span>
+                  <span className="text-green-600 font-bold">{t.paymentStatus}</span>
 
                   <span className="text-gray-500">ID Pembayaran :</span>
-                  <span className="font-medium">{t.paymentId}</span>
+                  <span className="font-medium text-black font-mono">{t.paymentId}</span>
                 </div>
               )}
             </div>
           </div>
         );
       })}
+
+      {/* --- MODAL POPUP QR CODE (SOLUSI GAMBAR) --- */}
+      {selectedQR && (
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+          <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl scale-in-center">
+            <h3 className="text-xl font-extrabold mb-4 text-black uppercase tracking-wider">Tiket E-Ticket</h3>
+            
+            <div className="bg-gray-50 p-6 rounded-2xl inline-block mb-6 border-4 border-dashed border-[#F4A623]">
+              <img 
+                src={selectedQR} 
+                alt="QR Ticket" 
+                className="w-52 h-52 mx-auto"
+              />
+            </div>
+            
+            <p className="text-sm text-gray-600 mb-8 leading-relaxed">
+              Silakan tunjukkan kode QR ini kepada petugas di lokasi acara untuk proses <span className="font-bold text-black">check-in</span>.
+            </p>
+            
+            <button 
+              onClick={() => setSelectedQR(null)}
+              className="w-full py-4 bg-black text-white font-bold rounded-2xl hover:bg-gray-800 transition-all shadow-lg active:scale-95"
+            >
+              Tutup
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
