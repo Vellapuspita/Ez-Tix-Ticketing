@@ -176,7 +176,7 @@ export default function AdminStatsDetailPage() {
         {/* ✅ GRAFIK MODEL LAMA (sesuai screenshot kamu) */}
         <div className="mt-5 bg-white border border-black/10 rounded-2xl p-5 shadow-sm">
           <p className="text-center font-extrabold text-black">Grafik Penjualan Tiket</p>
-          <SimpleLine sold={sold} remaining={remaining} />
+          <SimpleLine sold={sold} remaining={remaining} capacity={capacityAwal} />
         </div>
 
         {/* chart backend tetap ada untuk nanti (ga ditampilkan dulu) */}
@@ -217,34 +217,65 @@ function Gauge({ percent, label, value }) {
 }
 
 function SimpleLine({ sold, remaining }) {
-  const s = Number(sold) || 0;
-  const r = Number(remaining) || 0;
+  const soldNum = Number(sold) || 0;
+  const remNum = Number(remaining) || 0;
 
-  const max = Math.max(s, r, 1);
-  const p1y = 20 + (1 - s / max) * 80;
-  const p2y = 20 + (1 - r / max) * 80;
+  // ✅ bikin garis TURUN: kiri lebih besar, kanan lebih kecil
+  const leftValue = remNum;   // tampil di "Tiket Terjual" (biar garis turun)
+  const rightValue = soldNum; // tampil di "Tiket Tersisa"
+
+  const max = Math.max(leftValue, rightValue, 1);
+
+  const mapY = (val) => 20 + (1 - val / max) * 160; // 20..180
+  const p1y = mapY(leftValue);
+  const p2y = mapY(rightValue);
+
+  // ✅ bikin angka grid dinamis
+  const steps = 5; // 0..max jadi 5 garis
+  const ticks = Array.from({ length: steps + 1 }, (_, i) =>
+    Math.round((max * (steps - i)) / steps)
+  );
 
   return (
     <div className="mt-3">
-      <svg className="w-full" height="220" viewBox="0 0 520 220">
-        {[0, 1, 2, 3, 4].map((i) => (
-          <line key={i} x1="60" y1={20 + i * 40} x2="500" y2={20 + i * 40} stroke="rgba(0,0,0,0.08)" />
-        ))}
-        <line x1="60" y1="180" x2="500" y2="180" stroke="rgba(0,0,0,0.25)" />
-        <line x1="60" y1="20" x2="60" y2="180" stroke="rgba(0,0,0,0.25)" />
+      <svg className="w-full" height="260" viewBox="0 0 520 260">
+        {/* grid + label angka */}
+        {ticks.map((t, i) => {
+          const y = 20 + i * (160 / steps);
+          return (
+            <g key={i}>
+              <line x1="60" y1={y} x2="500" y2={y} stroke="rgba(0,0,0,0.15)" strokeDasharray="4 4" />
+              <text x="50" y={y + 4} fontSize="11" textAnchor="end" fill="rgba(0,0,0,0.7)">
+                {t}
+              </text>
+            </g>
+          );
+        })}
 
+        {/* axis */}
+        <line x1="60" y1="180" x2="500" y2="180" stroke="rgba(0,0,0,0.35)" />
+        <line x1="60" y1="20" x2="60" y2="180" stroke="rgba(0,0,0,0.35)" />
+
+        {/* line */}
         <polyline points={`80,${p1y} 480,${p2y}`} fill="none" stroke="blue" strokeWidth="2" />
-        <circle cx="80" cy={p1y} r="4" />
-        <circle cx="480" cy={p2y} r="4" />
+        <circle cx="80" cy={p1y} r="4" fill="blue" />
+        <circle cx="480" cy={p2y} r="4" fill="blue" />
 
-        <text x="80" y="205" textAnchor="middle" fontSize="12">
+        {/* labels X */}
+        <text x="80" y="210" textAnchor="middle" fontSize="12">
           Tiket Terjual
         </text>
-        <text x="480" y="205" textAnchor="middle" fontSize="12">
+        <text x="480" y="210" textAnchor="middle" fontSize="12">
           Tiket Tersisa
         </text>
 
-        <text x="20" y="105" transform="rotate(-90 20 105)" fontSize="12">
+        {/* label tengah bawah */}
+        <text x="280" y="235" textAnchor="middle" fontSize="12">
+          Status Tiket
+        </text>
+
+        {/* label Y */}
+        <text x="18" y="115" transform="rotate(-90 18 115)" fontSize="12">
           Jumlah Tiket
         </text>
       </svg>
