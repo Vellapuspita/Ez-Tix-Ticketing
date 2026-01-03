@@ -56,8 +56,10 @@ const beep = (type = "success") => {
 
     o.start();
     o.stop(audioCtx.currentTime + 0.25);
-  } catch {e}
-};
+  } catch (e) {
+  console.warn(e);
+}
+}
 
   const stopLoop = () => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
