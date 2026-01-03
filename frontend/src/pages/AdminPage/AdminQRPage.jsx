@@ -2,9 +2,21 @@
 import { useEffect, useRef, useState } from "react";
 import jsQR from "jsqr";
 import adminAxios from "../../utils/api";
+// === AUDIO CONTEXT GLOBAL ===
+let audioCtx = null;
+
 
 export default function AdminQRPage() {
   const videoRef = useRef(null);
+
+  // Inisialisasi AudioContext saat user klik tombol
+const initAudio = () => {
+  if (!audioCtx) {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    audioCtx = new Ctx();
+  }
+};
+
   const streamRef = useRef(null);
 
   const rafRef = useRef(null);
@@ -26,30 +38,26 @@ export default function AdminQRPage() {
   // =========================
   // Utils
   // =========================
-  const beep = (type = "success") => {
-    try {
-      const Ctx = window.AudioContext || window.webkitAudioContext;
-      const ctx = new Ctx();
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
+const beep = (type = "success") => {
+  try {
+    if (!audioCtx) return;
 
-      o.type = "sine";
-      o.frequency.value = type === "success" ? 880 : 220;
-      g.gain.value = 0.05;
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
 
-      o.connect(g);
-      g.connect(ctx.destination);
+    o.type = "sine";
+    o.frequency.value = type === "success" ? 880 : 220;
 
-      o.start();
-      o.stop(ctx.currentTime + 0.15);
+    // ⬇️ Volume lebih besar untuk error
+    g.gain.value = type === "success" ? 0.5 : 1.2;
 
-      setTimeout(() => {
-        ctx.close?.();
-      }, 250);
-    } catch {
-      // kalau browser blok audio, abaikan
-    }
-  };
+    o.connect(g);
+    g.connect(audioCtx.destination);
+
+    o.start();
+    o.stop(audioCtx.currentTime + 0.25);
+  } catch {e}
+};
 
   const stopLoop = () => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
@@ -230,6 +238,7 @@ export default function AdminQRPage() {
   // Camera control
   // =========================
   const startCamera = async () => {
+    initAudio();   // 🔊 aktifkan audio
     setError("");
     setLastResult(null);
     setRawText("");
