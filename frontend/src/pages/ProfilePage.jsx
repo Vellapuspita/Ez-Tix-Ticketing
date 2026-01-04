@@ -160,8 +160,8 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="flex justify-center py-10">
-      <div className="bg-[#F5F8E9] w-[600px] rounded-2xl p-8 shadow-lg relative">
+    <div className="flex justify-center py-10 px-4">
+      <div className="bg-[#F5F8E9] w-full max-w-xl rounded-2xl p-8 shadow-lg relative">
         <h1 className="text-2xl font-bold mb-6 text-center">Profil Saya</h1>
         {error && <p className="text-center text-red-500 mb-4">{error}</p>}
 
