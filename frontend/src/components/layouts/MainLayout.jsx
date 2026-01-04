@@ -42,11 +42,11 @@ export default function MainLayout() {
 
       {/* NAVBAR */}
       <nav className="w-full bg-gradient-to-r from-[#F4A623] to-[#F6B34B] py-3 shadow relative">
-        <div className="max-w-6xl mx-auto px-4 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
 
           {/* MENU LEFT */}
           {/* ... (Menu Dashboard, Acara, Tiketku tetap sama) ... */}
-          <div className="flex items-center gap-10 font-semibold text-sm">
+          <div className="flex items-center gap-10 font-semibold text-sm justify-between h-16">
 
             <NavLink
               to="/"
