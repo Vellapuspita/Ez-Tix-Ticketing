@@ -6,44 +6,50 @@ const jwt = require("jsonwebtoken");
 // 1. REGISTER USER (Public)
 // ===============================================================
 const register = async (req, res) => {
- try {
- const { name, email, password } = req.body; 
+  try {
+    const { name, email, password } = req.body;
 
- const existingUser = await User.findOne({ email });
- if (existingUser) {
- return res.status(400).json({ message: "Email sudah terdaftar" });
- }
+    // Check email sudah ada
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({
+        message: "Email sudah terdaftar",
+      });
+    }
 
- const hashedPassword = await bcrypt.hash(password, 10); 
+    // Enkripsi password
+    const hashedPassword = await bcrypt.hash(password, 10);
 
- const newUser = new User({
- namaPengguna: name,  
- email,
- kataSandi: hashedPassword, 
- role: "user" 
- });
+    // Simpan user baru
+    const newUser = new User({
+      namaPengguna: name,
+      email,
+      kataSandi: hashedPassword,
+      role: "user",
+    });
 
- await newUser.save();
+    await newUser.save();
 
- const token = jwt.sign(
- { id: newUser._id, email: newUser.email, role: newUser.role },
- process.env.JWT_SECRET,
- { expiresIn: "15m" }
- );
+    // Kirim response TANPA TOKEN
+    res.status(201).json({
+      message: "Registrasi user berhasil",
+      user: {
+        id: newUser._id,
+        namaPengguna: newUser.namaPengguna,
+        email: newUser.email,
+        role: newUser.role,
+      },
+    });
 
- res.status(201).json({ 
- message: "Registrasi user berhasil", 
- user: { id: newUser._id, namaPengguna: newUser.namaPengguna, email: newUser.email, role: newUser.role },
- token 
- });
- } catch (err) {
- console.error("🔴 Fatal Error during Registration:", err);
- res.status(500).json({ 
- message: "Terjadi kesalahan server saat registrasi. Cek log server untuk detail.", 
- error: err.message 
- });
- }
+  } catch (err) {
+    console.error("🔴 Error Register:", err);
+    res.status(500).json({
+      message: "Terjadi kesalahan server saat registrasi.",
+      error: err.message,
+    });
+  }
 };
+
 
 // ===============================================================
 // 2. REGISTER ADMIN (Public)
