@@ -56,7 +56,13 @@ const register = async (req, res) => {
 // ===============================================================
 const registerAdmin = async (req, res) => {
   try {
-    const { name, namaPengguna, email, password, kataSandi } = req.body;
+    const { name, namaPengguna, email, password, kataSandi } = req.body || {};
+
+    if (!req.body) {
+      return res.status(400).json({
+        message: "Request body kosong. Pastikan Content-Type application/json",
+      });
+    }
 
     const finalName = name || namaPengguna;
     const finalPassword = password || kataSandi;
@@ -98,7 +104,6 @@ const registerAdmin = async (req, res) => {
     });
   }
 };
-
 
 
 const loginAdmin = async (req, res) => {
