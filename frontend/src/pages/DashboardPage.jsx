@@ -89,17 +89,19 @@ export default function DashboardPage() {
             className="flex bg-[#FFF8E2] rounded-2xl shadow-md overflow-hidden"
           >
             {/* Poster kiri */}
-            <div className="p-4">
-              <img
-                // Akses gambar dari server static file
-                src={ev.gambar ? `${IMAGE_BASE_URL}${ev.gambar}` : 'placeholder.jpg'} 
-                alt={ev.namaEvent}
-                className="w-28 h-28 rounded-xl object-cover"
-              />
+            <div className="p-4 flex items-center">
+              <div className="w-28 h-28 rounded-xl overflow-hidden bg-white shrink-0">
+                <img
+                  src={ev.gambar ? `${IMAGE_BASE_URL}${ev.gambar}` : "placeholder.jpg"}
+                  alt={ev.namaEvent}
+                  className="w-full h-full object-cover"
+                />
+              </div>
             </div>
 
+
             {/* Middle Details */}
-            <div className="flex-1 py-4">
+            <div className="flex-1 py-4 pr-4">
               <h3 className="text-lg font-semibold">{ev.namaEvent}</h3>
 
               <div className="mt-2 space-y-1 text-sm">

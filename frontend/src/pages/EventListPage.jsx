@@ -172,25 +172,37 @@ export default function EventListPage() {
                 return (
                     <div
                         key={ev._id} // Gunakan _id dari MongoDB
-                        className="grid grid-cols-[160px_1fr_140px] bg-white rounded-2xl shadow overflow-hidden"
+                        className="grid grid-cols-[185px_1fr_140px] bg-white rounded-2xl shadow overflow-hidden"
+
                     >
 
                         {/* POSTER + DATE */}
-                        <div className="flex gap-3 p-4">
-                            <img
-                                src={ev.gambar ? `${IMAGE_BASE_URL}${ev.gambar}` : 'placeholder.jpg'}
-                                alt={ev.namaEvent}
-                                className="w-24 h-24 object-cover rounded-xl"
-                            />
-
-                            <div className="flex flex-col justify-center leading-tight">
-                                <p className="text-lg font-bold">{dateParts.day}</p>
-                                <p className="text-lg font-bold">{dateParts.month.substring(0, 3)}</p> {/* Bulan disingkat */}
-                                <p className="text-lg font-bold">{dateParts.year}</p>
-
-                                <p className="text-sm text-gray-700 mt-1">{ev.waktu}</p>
-                            </div>
+                        <div className="flex gap-4 p-4">
+  
+                      {/* WRAPPER GAMBAR — CENTER VERTIKAL */}
+                      <div className="flex items-center">
+                        <div className="w-24 h-24 rounded-xl overflow-hidden bg-gray-200 shrink-0">
+                          <img
+                            src={ev.gambar ? `${IMAGE_BASE_URL}${ev.gambar}` : "placeholder.jpg"}
+                            alt={ev.namaEvent}
+                            className="w-full h-full object-cover"
+                          />
                         </div>
+                      </div>
+
+                      {/* BLOK TANGGAL */}
+                      <div className="flex flex-col justify-center leading-tight">
+                        <p className="text-lg font-bold">{dateParts.day}</p>
+                        <p className="text-lg font-bold">
+                          {dateParts.month.substring(0, 3)}
+                        </p>
+                        <p className="text-lg font-bold">{dateParts.year}</p>
+                        <p className="text-sm text-gray-700 mt-1">{ev.waktu}</p>
+                      </div>
+
+                    </div>
+
+
 
                         {/* MIDDLE INFO */}
                         <div className="flex flex-col justify-center px-6 bg-[#F7F9E8]">
