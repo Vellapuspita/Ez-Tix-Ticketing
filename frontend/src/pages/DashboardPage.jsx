@@ -1,56 +1,41 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import axios from "axios"; // Gunakan axios biasa karena endpoint event ini public
-
-// Hapus import dummy data: import { events, recommended } from "../data/events";
+import { useState, useEffect, useMemo } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import axios from "axios";
 
 const BASE_URL = "http://localhost:4000/api/events";
-const IMAGE_BASE_URL = "http://localhost:4000"; // Untuk mengambil gambar dari /uploads
+const IMAGE_BASE_URL = "http://localhost:4000";
 
 export default function DashboardPage() {
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // State untuk menyimpan data event dari API
+  // ✅ ambil query dari navbar (?q=)
+  const searchQ = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    return (params.get("q") || "").trim();
+  }, [location.search]);
+
   const [upcomingEvents, setUpcomingEvents] = useState([]);
   const [recommendedEvents, setRecommendedEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fungsi untuk format tanggal dan waktu
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('id-ID', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    });
-  };
-  const formatRupiah = (price) => {
-      // Harga di backend disimpan sebagai number, tampilkan sebagai Rupiah
-      return new Intl.NumberFormat('id-ID', {
-          style: 'currency',
-          currency: 'IDR',
-          minimumFractionDigits: 0
-      }).format(price);
-  };
-  
+  const formatDate = (dateString) =>
+    new Date(dateString).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
 
-  // ===============================================================
-  // FUNGSI AMBIL DATA EVENTS DARI BACKEND
-  // ===============================================================
+  const formatRupiah = (price) =>
+    new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(price);
+
   const fetchEvents = async () => {
     try {
       setLoading(true);
+      setError(null);
 
-      // 1. Ambil Event Utama (Upcoming events kecuali rekomendasi)
-      // Endpoint: GET /api/events/
-      const upcomingResponse = await axios.get(BASE_URL + "/"); 
+      const upcomingResponse = await axios.get(BASE_URL + "/");
       setUpcomingEvents(upcomingResponse.data.events || []);
 
-      // 2. Ambil Event Rekomendasi
-      // Endpoint: GET /api/events/recommendation
-      const recommendedResponse = await axios.get(BASE_URL + "/recommendation"); 
+      const recommendedResponse = await axios.get(BASE_URL + "/recommendation");
       setRecommendedEvents(recommendedResponse.data || []);
-      
     } catch (err) {
       console.error("Error fetching events:", err);
       setError("Gagal memuat acara. Pastikan server backend berjalan.");
@@ -63,32 +48,52 @@ export default function DashboardPage() {
     fetchEvents();
   }, []);
 
-  // Tampilan Loading atau Error
-  if (loading) {
-    return <div className="text-center py-20">Memuat acara...</div>;
-  }
+  // ✅ filter berdasarkan searchQ dari navbar
+  const filteredUpcoming = useMemo(() => {
+    const q = searchQ.toLowerCase();
+    if (!q) return upcomingEvents;
 
-  if (error) {
-    return <div className="text-center py-20 text-red-500">{error}</div>;
-  }
+    return upcomingEvents.filter((ev) => {
+      const nama = (ev.namaEvent || "").toLowerCase();
+      const lokasi = (ev.lokasi || "").toLowerCase();
+      const penyelenggara = (ev.penyelenggara || "").toLowerCase();
+      return nama.includes(q) || lokasi.includes(q) || penyelenggara.includes(q);
+    });
+  }, [upcomingEvents, searchQ]);
+
+  const filteredRecommended = useMemo(() => {
+    const q = searchQ.toLowerCase();
+    if (!q) return recommendedEvents;
+
+    return recommendedEvents.filter((ev) => {
+      const nama = (ev.namaEvent || "").toLowerCase();
+      const lokasi = (ev.lokasi || "").toLowerCase();
+      const penyelenggara = (ev.penyelenggara || "").toLowerCase();
+      return nama.includes(q) || lokasi.includes(q) || penyelenggara.includes(q);
+    });
+  }, [recommendedEvents, searchQ]);
+
+  if (loading) return <div className="text-center py-20">Memuat acara...</div>;
+  if (error) return <div className="text-center py-20 text-red-500">{error}</div>;
 
   return (
     <div>
-      {/* Title */}
-      <h1 className="text-4xl font-bold mb-8 leading-snug">
+      <h1 className="text-4xl font-bold mb-4 leading-snug">
         Nikmati pengalaman terbaik <br />
-        mencari dan membeli tiket{" "}
-        <span className="text-primary">acara favoritmu</span>
+        mencari dan membeli tiket <span className="text-primary">acara favoritmu</span>
       </h1>
 
-      {/* GRID EVENT UTAMA (2×2) */}
+      {/* optional info */}
+      {searchQ && (
+        <p className="text-sm text-gray-600 mb-6">
+          Hasil pencarian untuk: <span className="font-semibold">"{searchQ}"</span>
+        </p>
+      )}
+
+      {/* GRID EVENT UTAMA */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {upcomingEvents.map((ev) => (
-          <div
-            key={ev._id} // Gunakan _id dari MongoDB
-            className="flex bg-[#FFF8E2] rounded-2xl shadow-md overflow-hidden"
-          >
-            {/* Poster kiri */}
+        {filteredUpcoming.map((ev) => (
+          <div key={ev._id} className="flex bg-[#FFF8E2] rounded-2xl shadow-md overflow-hidden">
             <div className="p-4 flex items-center">
               <div className="w-28 h-28 rounded-xl overflow-hidden bg-white shrink-0">
                 <img
@@ -99,80 +104,64 @@ export default function DashboardPage() {
               </div>
             </div>
 
-
-            {/* Middle Details */}
             <div className="flex-1 py-4 pr-4">
               <h3 className="text-lg font-semibold">{ev.namaEvent}</h3>
 
               <div className="mt-2 space-y-1 text-sm">
                 <p className="flex items-center gap-2">
-                  <span className="material-icons text-gray-600 text-base">
-                    location_on
-                  </span>
+                  <span className="material-icons text-gray-600 text-base">location_on</span>
                   {ev.lokasi}
                 </p>
 
                 <p className="flex items-center gap-2">
-                  <span className="material-icons text-gray-600 text-base">
-                    payments
-                  </span>
-                  {formatRupiah(ev.hargaTiket)} {/* Format harga */}
+                  <span className="material-icons text-gray-600 text-base">payments</span>
+                  {formatRupiah(ev.hargaTiket)}
                 </p>
 
                 <p className="flex items-center gap-2">
-                  <span className="material-icons text-gray-600 text-base">
-                    event
-                  </span>
-                  {formatDate(ev.tanggal)} {/* Format tanggal */}
+                  <span className="material-icons text-gray-600 text-base">event</span>
+                  {formatDate(ev.tanggal)}
                 </p>
 
                 <p className="flex items-center gap-2">
-                  <span className="material-icons text-gray-600 text-base">
-                    schedule
-                  </span>
+                  <span className="material-icons text-gray-600 text-base">schedule</span>
                   {ev.waktu}
                 </p>
               </div>
             </div>
 
-            {/* Button kanan */}
             <div className="flex items-center justify-center bg-[#F4A623] px-6">
-              <button
-                onClick={() => navigate(`/events/${ev._id}`)} // Gunakan _id untuk navigasi
-                className="font-semibold text-black whitespace-nowrap"
-              >
+              <button onClick={() => navigate(`/events/${ev._id}`)} className="font-semibold text-black whitespace-nowrap">
                 Beli tiket
               </button>
             </div>
           </div>
         ))}
       </div>
-      
-      {/* Jika tidak ada event utama */}
-      {upcomingEvents.length === 0 && (
-          <p className="text-center text-gray-500 mt-8">Tidak ada acara yang akan datang saat ini.</p>
+
+      {filteredUpcoming.length === 0 && (
+        <p className="text-center text-gray-500 mt-8">
+          {searchQ ? `Tidak ada event utama yang cocok dengan "${searchQ}".` : "Tidak ada acara yang akan datang saat ini."}
+        </p>
       )}
 
-      {/* Rekomendasi acara */}
       <h2 className="text-xl font-semibold mt-10 mb-4">Rekomendasi acara</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {recommendedEvents.map((rec) => (
+        {filteredRecommended.map((rec) => (
           <div
-            key={rec._id} // Gunakan _id dari MongoDB
+            key={rec._id}
             className="relative rounded-2xl shadow-lg overflow-hidden cursor-pointer"
             onClick={() => navigate(`/events/${rec._id}`)}
           >
             <img
-              src={rec.gambar ? `${IMAGE_BASE_URL}${rec.gambar}` : 'placeholder.jpg'}
+              src={rec.gambar ? `${IMAGE_BASE_URL}${rec.gambar}` : "placeholder.jpg"}
               alt={rec.namaEvent}
               className="w-full h-56 object-cover"
             />
 
-            {/* Overlay */}
             <div className="absolute bottom-0 w-full p-4 bg-gradient-to-t from-black/85 to-transparent text-white">
               <h3 className="text-lg font-semibold">{rec.namaEvent}</h3>
-
               <div className="text-xs opacity-90 space-y-1 mt-1">
                 <p>{rec.lokasi}</p>
                 <p>{formatDate(rec.tanggal)}</p>
@@ -185,10 +174,11 @@ export default function DashboardPage() {
           </div>
         ))}
       </div>
-      
-      {/* Jika tidak ada rekomendasi */}
-      {recommendedEvents.length === 0 && (
-          <p className="text-center text-gray-500 mt-8">Tidak ada rekomendasi acara saat ini.</p>
+
+      {filteredRecommended.length === 0 && (
+        <p className="text-center text-gray-500 mt-8">
+          {searchQ ? `Tidak ada rekomendasi yang cocok dengan "${searchQ}".` : "Tidak ada rekomendasi acara saat ini."}
+        </p>
       )}
     </div>
   );
