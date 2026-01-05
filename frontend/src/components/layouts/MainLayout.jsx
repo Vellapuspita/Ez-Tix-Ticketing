@@ -129,7 +129,7 @@ export default function MainLayout() {
                     ? "Cari event di Dashboard..."
                     : location.pathname === "/events"
                     ? "Cari event di Acara..."
-                    : "Cari..."
+                    : "Cari Tiketmu..."
                 }
                 value={navQ}
                 onChange={(e) => {
