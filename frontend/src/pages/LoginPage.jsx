@@ -13,43 +13,54 @@ export default function LoginPage() {
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
-    e.preventDefault();
-    setError("");
+  e.preventDefault();
+  setError("");
 
-    if (!email || !password) {
-      setError("Email atau kata sandi tidak boleh kosong.");
-      return;
-    }
+  if (!email || !password) {
+    setError("Email atau kata sandi tidak boleh kosong.");
+    return;
+  }
 
-    try {
-      setIsLoading(true);
+  try {
+    setIsLoading(true);
 
-      const response = await axios.post(
-        "http://localhost:4000/api/auth/login",
-        {
-          email,
-          kataSandi: password,
-        }
+    const response = await axios.post(
+      "http://localhost:4000/api/auth/login",
+      {
+        email,
+        kataSandi: password,
+      }
+    );
+
+    const token = response.data.token;
+    const userData = response.data.user;
+
+    if (token && userData) {
+      // 🔐 simpan token
+      localStorage.setItem("token", token);
+
+      // ✅ SIMPAN DATA PROFIL UNTUK NAVBAR
+      localStorage.setItem("userName", userData.namaPengguna || "");
+      localStorage.setItem(
+        "userProfilePicture",
+        userData.profilePicture || ""
       );
 
-      const token = response.data.token;
-      const userData = response.data.user;
-      const userName = userData ? userData.namaPengguna : "Pengguna";
+      // ✅ trigger update navbar (1 tab)
+      window.dispatchEvent(new Event("profile_updated"));
 
-      if (token) {
-        localStorage.setItem("token", token);
-        localStorage.setItem("userName", userName);
-        navigate("/");
-      }
-    } catch (err) {
-      const errorMessage =
-        err.response?.data?.message ||
-        "Login gagal. Periksa email dan kata sandi Anda.";
-      setError(errorMessage);
-    } finally {
-      setIsLoading(false);
+      navigate("/");
     }
-  };
+  } catch (err) {
+    const errorMessage =
+      err.response?.data?.message ||
+      "Login gagal. Periksa email dan kata sandi Anda.";
+    setError(errorMessage);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   return (
     <div className="flex flex-col justify-center h-full">

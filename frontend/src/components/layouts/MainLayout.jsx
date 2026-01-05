@@ -1,59 +1,59 @@
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react"; // <-- IMPORT INI
+import { useState, useEffect } from "react";
+
+const API_ORIGIN = "http://localhost:4000"; // sesuaikan jika beda
 
 export default function MainLayout() {
   const navigate = useNavigate();
-  // --- STATE UNTUK INISIAL ---
-  const [initials, setInitials] = useState('S'); 
 
-  // ===============================================================
-  // LOGIC AMBIL INISIAL DARI LOCAL STORAGE
-  // ===============================================================
-  const updateInitials = () => {
-    const userName = localStorage.getItem('userName');
-    const token = localStorage.getItem('token');
-    
+  const [initials, setInitials] = useState("S");
+  const [avatarUrl, setAvatarUrl] = useState(""); // ✅ foto dari backend
+
+  const syncAvatar = () => {
+    const userName = localStorage.getItem("userName");
+    const token = localStorage.getItem("token");
+    const profilePicture = localStorage.getItem("userProfilePicture"); // ✅ path: /uploads/xxx.png
+
     if (userName && token) {
-      // Jika ada nama dan token, gunakan inisial dari nama
       setInitials(userName.charAt(0).toUpperCase());
     } else {
-      // Jika tidak ada token (belum login), biarkan sebagai 'S' (atau ikon login)
-      setInitials('S'); 
+      setInitials("S");
+    }
+
+    if (profilePicture && token) {
+      // cache buster biar kalau ganti file dengan nama sama, tetap refresh
+      setAvatarUrl(`${API_ORIGIN}${profilePicture}?v=${Date.now()}`);
+    } else {
+      setAvatarUrl("");
     }
   };
 
   useEffect(() => {
-    // Jalankan saat komponen dimuat
-    updateInitials();
+    syncAvatar();
 
-    // Tambahkan event listener untuk merespons perubahan storage (misal: saat logout)
-    window.addEventListener('storage', updateInitials);
-    
+    // event storage biasanya cuma kebaca antar-tab
+    window.addEventListener("storage", syncAvatar);
+
+    // ✅ event custom (biar 1 tab juga update)
+    window.addEventListener("profile_updated", syncAvatar);
+
     return () => {
-        // Bersihkan event listener saat komponen dilepas
-        window.removeEventListener('storage', updateInitials);
+      window.removeEventListener("storage", syncAvatar);
+      window.removeEventListener("profile_updated", syncAvatar);
     };
-  }, []); 
-  // ===============================================================
-
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#F7F7F7]">
-
       {/* NAVBAR */}
       <nav className="w-full bg-gradient-to-r from-[#F4A623] to-[#F6B34B] py-3 shadow relative">
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-
           {/* MENU LEFT */}
-          {/* ... (Menu Dashboard, Acara, Tiketku tetap sama) ... */}
           <div className="flex items-center gap-10 font-semibold text-sm justify-between h-16">
-
             <NavLink
               to="/"
               className={({ isActive }) =>
-                isActive
-                  ? "relative pb-2 text-white"
-                  : "relative pb-2 text-black"
+                isActive ? "relative pb-2 text-white" : "relative pb-2 text-black"
               }
             >
               Dashboard
@@ -67,9 +67,7 @@ export default function MainLayout() {
             <NavLink
               to="/events"
               className={({ isActive }) =>
-                isActive
-                  ? "relative pb-2 text-white"
-                  : "relative pb-2 text-black"
+                isActive ? "relative pb-2 text-white" : "relative pb-2 text-black"
               }
             >
               Acara
@@ -83,9 +81,7 @@ export default function MainLayout() {
             <NavLink
               to="/tickets"
               className={({ isActive }) =>
-                isActive
-                  ? "relative pb-2 text-white"
-                  : "relative pb-2 text-black"
+                isActive ? "relative pb-2 text-white" : "relative pb-2 text-black"
               }
             >
               Tiketku
@@ -95,7 +91,6 @@ export default function MainLayout() {
                 }`}
               />
             </NavLink>
-
           </div>
 
           {/* SEARCH + AVATAR */}
@@ -110,16 +105,24 @@ export default function MainLayout() {
               </span>
             </div>
 
-            {/* Avatar - Gunakan state initials yang baru */}
-            <div
-              className="h-9 w-9 bg-white rounded-full flex items-center justify-center text-[#F4A623] font-semibold shadow cursor-pointer"
+            {/* ✅ Avatar: Foto dulu, kalau gak ada baru inisial */}
+            <button
+              className="h-9 w-9 bg-white rounded-full flex items-center justify-center text-[#F4A623] font-semibold shadow overflow-hidden"
               onClick={() => navigate("/profile")}
+              aria-label="Open profile"
+              type="button"
             >
-              {initials} {/* <-- PERUBAHAN KRITIS */}
-            </div>
-
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt="avatar"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                initials
+              )}
+            </button>
           </div>
-
         </div>
       </nav>
 

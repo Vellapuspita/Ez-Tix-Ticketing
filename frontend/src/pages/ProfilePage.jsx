@@ -74,6 +74,11 @@ export default function ProfilePage() {
       setNewName(userData.namaPengguna || "");
 
       setPhotoPreview(buildAvatarUrl(userData.profilePicture));
+
+      localStorage.setItem("userName", userData.namaPengguna || "");
+      localStorage.setItem("userProfilePicture", userData.profilePicture || "");
+      window.dispatchEvent(new Event("profile_updated"));
+
     } catch (err) {
       console.error("Error fetching profile:", err);
       if (err.response && (err.response.status === 401 || err.response.status === 403)) {
@@ -125,6 +130,13 @@ export default function ProfilePage() {
       });
 
       const updatedUser = res.data.user;
+
+      localStorage.setItem("userName", updatedUser.namaPengguna || "");
+localStorage.setItem("userProfilePicture", updatedUser.profilePicture || "");
+
+// biar navbar update instan di tab yang sama
+window.dispatchEvent(new Event("profile_updated"));
+
       setProfile(updatedUser);
 
       // persist preview dari backend (bukan blob)
@@ -194,9 +206,18 @@ export default function ProfilePage() {
   // LOGOUT
   // =========================
   const handleConfirmLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/login");
-  };
+  localStorage.removeItem("token");
+
+  // ✅ bersihin cache profil biar gak kebawa akun lain
+  localStorage.removeItem("userName");
+  localStorage.removeItem("userProfilePicture");
+
+  // ✅ paksa navbar update di tab yang sama
+  window.dispatchEvent(new Event("profile_updated"));
+
+  navigate("/login");
+};
+
 
   if (loading) {
     return <div className="text-center py-20">Loading data profil...</div>;
