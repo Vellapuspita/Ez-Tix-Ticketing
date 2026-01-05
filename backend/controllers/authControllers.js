@@ -303,4 +303,37 @@ const updateProfile = async (req, res) => {
     }
 };
 
-module.exports = { register, registerAdmin, login, loginAdmin, resetPassword, getProfile, updateProfile };
+const updateProfilePicture = async (req, res) => {
+  try {
+    // token jwt sudah inject req.user.id dari authMiddleware
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User tidak ditemukan" });
+
+    if (!req.file) {
+      return res.status(400).json({ message: "File foto tidak ditemukan" });
+    }
+
+    // simpan path file ke DB
+    user.profilePicture = `/uploads/${req.file.filename}`;
+    await user.save();
+
+    return res.json({
+      message: "Foto profil berhasil diperbarui",
+      user: {
+        id: user._id,
+        namaPengguna: user.namaPengguna,
+        email: user.email,
+        role: user.role,
+        profilePicture: user.profilePicture,
+      },
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: "Terjadi kesalahan server saat update foto profil.",
+      error: err.message,
+    });
+  }
+};
+
+
+module.exports = { register, registerAdmin, login, loginAdmin, resetPassword, getProfile, updateProfile, updateProfilePicture };

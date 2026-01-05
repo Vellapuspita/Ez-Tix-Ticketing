@@ -1,48 +1,23 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import authAxios from "../utils/authAxios"; // Pastikan path ini benar!
+import authAxios from "../utils/authAxios";
+
+const API_ORIGIN = "http://localhost:4000"; // sama dengan server BE kamu
 
 export default function ProfilePage() {
   const navigate = useNavigate();
 
   // =========================
-  // FOTO (localStorage)
-  // =========================
-  const [photoPreview, setPhotoPreview] = useState(
-    localStorage.getItem("profilePhoto") || ""
-  );
-
-  const handlePhotoChange = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // validasi ringan
-    const allowed = ["image/jpeg", "image/png", "image/jpg"];
-    if (!allowed.includes(file.type)) {
-      alert("Format foto harus JPG/PNG.");
-      return;
-    }
-    if (file.size > 2 * 1024 * 1024) {
-      alert("Ukuran foto maksimal 2MB.");
-      return;
-    }
-
-    // simpan base64 ke localStorage biar persist
-    const reader = new FileReader();
-    reader.onload = () => {
-      localStorage.setItem("profilePhoto", reader.result);
-      setPhotoPreview(reader.result);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  // =========================
-  // State Data Profil dari Backend
+  // State Profil dari Backend
   // =========================
   const [profile, setProfile] = useState({
     namaPengguna: "",
     email: "",
+    profilePicture: null,
   });
+
+  // preview foto (bisa dari backend url atau blob url)
+  const [photoPreview, setPhotoPreview] = useState("");
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -55,6 +30,7 @@ export default function ProfilePage() {
     newPassword: "",
     confirmNewPassword: "",
   });
+
   const [isUpdating, setIsUpdating] = useState(false);
 
   // =========================
@@ -64,6 +40,17 @@ export default function ProfilePage() {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+
+  // =========================
+  // Helper: build avatar URL
+  // =========================
+  const buildAvatarUrl = (pathOrUrl) => {
+    if (!pathOrUrl) return "";
+    // kalau sudah full url, pakai langsung
+    if (String(pathOrUrl).startsWith("http")) return pathOrUrl;
+    // kalau path /uploads/...
+    return `${API_ORIGIN}${pathOrUrl}`;
+  };
 
   // =========================
   // A. GET PROFILE
@@ -79,16 +66,20 @@ export default function ProfilePage() {
       setLoading(true);
       setError(null);
 
-      const response = await authAxios.get("auth/profile");
+      // IMPORTANT: pakai "/" biar gak jadi /apiauth/...
+      const response = await authAxios.get("/auth/profile");
       const userData = response.data.user;
 
       setProfile(userData);
-      setNewName(userData.namaPengguna);
+      setNewName(userData.namaPengguna || "");
+
+      setPhotoPreview(buildAvatarUrl(userData.profilePicture));
     } catch (err) {
       console.error("Error fetching profile:", err);
       if (err.response && (err.response.status === 401 || err.response.status === 403)) {
         localStorage.removeItem("token");
         navigate("/login");
+        return;
       }
       setError("Gagal mengambil data profil.");
     } finally {
@@ -98,7 +89,59 @@ export default function ProfilePage() {
 
   useEffect(() => {
     fetchProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // =========================
+  // Upload Foto Profil (khusus)
+  // Endpoint: PUT /auth/profile/picture
+  // =========================
+  const handlePhotoChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowed = ["image/jpeg", "image/png", "image/jpg"];
+    if (!allowed.includes(file.type)) {
+      alert("Format foto harus JPG/PNG.");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      alert("Ukuran foto maksimal 2MB.");
+      return;
+    }
+
+    const prevUrl = buildAvatarUrl(profile.profilePicture);
+
+    // preview instan
+    const localPreview = URL.createObjectURL(file);
+    setPhotoPreview(localPreview);
+
+    try {
+      const formData = new FormData();
+      formData.append("profilePicture", file);
+
+      const res = await authAxios.put("/auth/profile/picture", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      const updatedUser = res.data.user;
+      setProfile(updatedUser);
+
+      // persist preview dari backend (bukan blob)
+      setPhotoPreview(buildAvatarUrl(updatedUser.profilePicture));
+
+      setSuccessMessage("Foto profil berhasil diperbarui!");
+      setShowSuccessPopup(true);
+    } catch (err) {
+      console.error("Upload foto error:", err.response?.data || err);
+      alert(err.response?.data?.message || "Gagal upload foto.");
+      setPhotoPreview(prevUrl);
+    } finally {
+      URL.revokeObjectURL(localPreview);
+      // reset input biar bisa upload file yang sama lagi
+      e.target.value = "";
+    }
+  };
 
   // =========================
   // B. SAVE CHANGES (Nama & Password)
@@ -125,7 +168,7 @@ export default function ProfilePage() {
 
     try {
       if (isNameChanged) {
-        await authAxios.put("auth/profile", { name: newName });
+        await authAxios.put("/auth/profile", { name: newName });
         setProfile((prev) => ({ ...prev, namaPengguna: newName }));
       }
 
@@ -165,7 +208,7 @@ export default function ProfilePage() {
         <h1 className="text-2xl font-bold mb-6 text-center">Profil Saya</h1>
         {error && <p className="text-center text-red-500 mb-4">{error}</p>}
 
-        {/* FOTO PROFIL (UPLOAD DARI DEVICE) */}
+        {/* FOTO PROFIL */}
         <div className="flex flex-col items-center gap-3">
           <img
             src={photoPreview || "https://via.placeholder.com/150?text=Foto"}
@@ -202,7 +245,7 @@ export default function ProfilePage() {
             <p className="font-semibold text-sm">Email Pengguna</p>
             <input
               className="w-full rounded-lg border px-3 py-1 bg-gray-200"
-              value={profile.email}
+              value={profile.email || ""}
               readOnly
             />
           </div>
@@ -215,7 +258,7 @@ export default function ProfilePage() {
               type="password"
               className="w-full rounded-lg border px-3 py-1"
               onChange={(e) =>
-                setPasswordForm({ ...passwordForm, newPassword: e.target.value })
+                setPasswordForm((p) => ({ ...p, newPassword: e.target.value }))
               }
               value={passwordForm.newPassword}
               placeholder="Biarkan kosong jika tidak ingin mengubah"
@@ -229,10 +272,7 @@ export default function ProfilePage() {
               type="password"
               className="w-full rounded-lg border px-3 py-1"
               onChange={(e) =>
-                setPasswordForm({
-                  ...passwordForm,
-                  confirmNewPassword: e.target.value,
-                })
+                setPasswordForm((p) => ({ ...p, confirmNewPassword: e.target.value }))
               }
               value={passwordForm.confirmNewPassword}
               placeholder="Biarkan kosong jika tidak ingin mengubah"
@@ -266,9 +306,7 @@ export default function ProfilePage() {
         {showEditConfirm && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
             <div className="bg-white rounded-xl p-6 shadow-lg w-[300px] text-center">
-              <p className="font-medium mb-4">
-                Apakah Anda yakin ingin menyimpan perubahan?
-              </p>
+              <p className="font-medium mb-4">Apakah Anda yakin ingin menyimpan perubahan?</p>
 
               <div className="flex justify-between px-6">
                 <button
@@ -310,6 +348,7 @@ export default function ProfilePage() {
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
             <div className="bg-white rounded-xl p-6 shadow-lg w-[300px] text-center">
               <p className="font-medium mb-4">Anda yakin ingin keluar?</p>
+
               <div className="flex justify-between px-6">
                 <button
                   onClick={handleConfirmLogout}
@@ -317,6 +356,7 @@ export default function ProfilePage() {
                 >
                   Iya
                 </button>
+
                 <button
                   onClick={() => setShowLogoutConfirm(false)}
                   className="bg-red-500 text-white px-4 py-1 rounded-lg"

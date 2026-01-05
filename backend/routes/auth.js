@@ -7,8 +7,11 @@ const {
  resetPassword, // Sekarang digunakan untuk Change Password
  getProfile,
  updateProfile,
+ updateProfilePicture
 } = require("../controllers/authControllers");
 const authMiddleware = require("../middleware/authMiddleware");
+const upload = require("../middleware/uploadMiddleware");
+
 
 // CATATAN: Middleware 'upload' DIHAPUS karena Anda tidak ingin fitur ubah foto.
 // Jika Anda ingin menggunakannya di route lain, biarkan import ini.
@@ -43,6 +46,14 @@ router.put(
  authMiddleware,
  updateProfile // Hanya memproses data JSON (nama)
 );
+
+router.put(
+  "/profile/picture",
+  authMiddleware,
+  upload.single("profilePicture"),
+  updateProfilePicture
+);
+
 
 // CHANGE PASSWORD (Menggantikan fungsi reset password publik)
 // Memungkinkan user yang sudah login mengubah passwordnya sendiri
