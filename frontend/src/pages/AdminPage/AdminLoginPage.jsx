@@ -160,24 +160,6 @@ export default function AdminLoginPage() {
                 >
                   {isLoading ? "Memverifikasi Akun..." : "Masuk Sebagai Admin"}
                 </button>
-
-                {/* Optional Links */}
-                <div className="space-y-3 pt-2">
-                  <p className="text-xs text-black/60 text-center">
-                    Belum punya akun admin?{" "}
-                    <Link
-                      to="/register"
-                      className="text-[#F28B3C] font-semibold hover:underline"
-                    >
-                      Daftar Admin
-                    </Link>
-                  </p>
-                  <p className="text-[11px] text-black/40 text-center">
-                    <Link to="/login" className="hover:underline">
-                      Kembali ke login customer
-                    </Link>
-                  </p>
-                </div>
               </form>
             </div>
 
