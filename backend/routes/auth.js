@@ -5,6 +5,7 @@ const {
  login,
  loginAdmin,
  resetPassword, // Sekarang digunakan untuk Change Password
+ resetPasswordSimple,
  getProfile,
  updateProfile,
  updateProfilePicture
@@ -25,6 +26,10 @@ const router = express.Router();
 router.post("/register", register);
 router.post("/register-admin", registerAdmin);
 router.post("/login", login);
+
+// RESET PASSWORD SIMPLE (PUBLIC)
+router.post("/reset-password-simple", resetPasswordSimple);
+
 router.post("/admin/login", loginAdmin);
 
 // CATATAN PENTING:

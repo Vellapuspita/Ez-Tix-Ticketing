@@ -244,6 +244,47 @@ const resetPassword = async (req, res) => {
     }
 };
 
+const resetPasswordSimple = async (req, res) => {
+  try {
+    const { email, kataSandiBaru } = req.body;
+
+    if (!email || !kataSandiBaru) {
+      return res.status(400).json({
+        message: "Email dan kata sandi baru wajib diisi",
+      });
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({
+        message: "Email tidak ditemukan",
+      });
+    }
+
+    // ⛔ blok admin reset lewat user flow
+    if (user.role !== "user") {
+      return res.status(403).json({
+        message: "Akun ini tidak diizinkan reset lewat halaman user",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(kataSandiBaru, 10);
+    user.kataSandi = hashedPassword;
+    await user.save();
+
+    return res.status(200).json({
+      message: "Kata sandi berhasil direset",
+    });
+  } catch (err) {
+    console.error("Error resetPasswordSimple:", err);
+    return res.status(500).json({
+      message: "Terjadi kesalahan server saat reset kata sandi",
+      error: err.message,
+    });
+  }
+};
+
 // ===============================================================
 // 5. GET PROFILE (Protected)
 // Endpoint: /profile (GET)
@@ -336,4 +377,4 @@ const updateProfilePicture = async (req, res) => {
 };
 
 
-module.exports = { register, registerAdmin, login, loginAdmin, resetPassword, getProfile, updateProfile, updateProfilePicture };
+module.exports = { register, registerAdmin, login, loginAdmin, resetPassword, resetPasswordSimple, getProfile, updateProfile, updateProfilePicture };
